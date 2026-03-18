@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ru">
+<link rel="manifest" href="manifest.json" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('SW registered'))
+          .catch(e => console.log('SW error', e));
+      });
+    }
+  </script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#080810" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Stoic Mentor · AI</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { serif:['Cormorant Garamond','serif'], sans:['Outfit','sans-serif'] },
+          colors: {
+            obsidian:'#080810', gold:'#C9A84C', 'gold-light':'#E8C96A',
+            'gold-dim':'#8A6E2F', muted:'#6B6B9A', soft:'#A0A0C0', border:'#252545'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *{-webkit-tap-highlight-color:transparent;}
+    body{background:#080810;font-family:'Outfit',sans-serif;color:#E8E8FF;min-height:100vh;overscroll-behavior:none;}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.35;}
+    .ambient{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:80vw;height:60vh;background:radial-gradient(ellipse,rgba(201,168,76,.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+    .glass{background:rgba(17,17,32,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);}
+    .glass-gold{background:rgba(201,168,76,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,.2);}
+    .gold-text{background:linear-gradient(135deg,#E8C96A 0%,#C9A84C 50%,#8A6E2F 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);}
+    .bottom-nav{background:rgba(8,8,16,.94);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);}
+    .nav-item.active .nav-icon{color:#C9A84C;} .nav-item.active .nav-label{color:#C9A84C;}
+    .nav-item .nav-icon{color:#6B6B9A;transition:color .2s;} .nav-item .nav-label{color:#6B6B9A;transition:color .2s;font-size:10px;}
+    .tab{display:none;} .tab.active{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+    .stoic-input{background:rgba(17,17,32,.9);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:#E8E8FF;font-family:'Outfit',sans-serif;font-size:15px;resize:none;outline:none;transition:border-color .3s;width:100%;padding:14px 16px;}
+    .stoic-input:focus{border-color:rgba(201,168,76,.45);} .stoic-input::placeholder{color:#6B6B9A;}
+    .send-btn{background:linear-gradient(135deg,#C9A84C,#8A6E2F);border-radius:14px;border:none;width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s,transform .1s;flex-shrink:0;}
+    .send-btn:active{transform:scale(.93);opacity:.8;} .send-btn:disabled{opacity:.3;cursor:not-allowed;}
+    @keyframes shimmer{0%{background-position:-300px 0}100%{background-position:300px 0}}
+    .skeleton{background:linear-gradient(90deg,rgba(37,37,69,.8) 25%,rgba(60,60,100,.9) 50%,rgba(37,37,69,.8) 75%);background-size:600px 100%;animation:shimmer 1.4s infinite;border-radius:8px;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .4s ease forwards;}
+    @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+    .pd1{animation:pulseDot 1s infinite;} .pd2{animation:pulseDot 1s .18s infinite;} .pd3{animation:pulseDot 1s .36s infinite;}
+    .credit-on{background:#C9A84C;box-shadow:0 0 8px rgba(201,168,76,.6);} .credit-off{background:rgba(201,168,76,.18);}
+    .pro-badge{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:2px 10px;font-size:11px;color:#C9A84C;font-weight:600;letter-spacing:.5px;}
+    .lock-overlay{position:absolute;inset:0;background:rgba(8,8,16,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;}
+    .toggle-track{width:44px;height:24px;background:rgba(37,37,69,1);border-radius:12px;position:relative;transition:background .3s;cursor:pointer;border:1px solid rgba(255,255,255,.08);}
+    .toggle-track.on{background:rgba(201,168,76,.3);border-color:rgba(201,168,76,.3);}
+    .toggle-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;background:#6B6B9A;border-radius:50%;transition:transform .25s,background .25s;}
+    .toggle-track.on .toggle-thumb{transform:translateX(20px);background:#C9A84C;}
+    .lang-btn{font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 10px;border-radius:12px;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+    .lang-btn.active{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.35);color:#C9A84C;}
+    .lang-btn:not(.active){color:#6B6B9A;}
+    ::-webkit-scrollbar{width:2px;} ::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:4px;}
+    .safe-bottom{padding-bottom:env(safe-area-inset-bottom,16px);} .pt-safe{padding-top:env(safe-area-inset-top,0px);}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .cursor{display:inline-block;width:2px;height:1em;background:#C9A84C;margin-left:2px;vertical-align:text-bottom;animation:blink .7s infinite;}
+    .demo-badge{background:rgba(107,107,154,.12);border:1px solid rgba(107,107,154,.25);border-radius:20px;padding:2px 10px;font-size:10px;color:#6B6B9A;font-weight:500;}
+  </style>
+</head>
+<body class="relative">
+<div class="ambient"></div>
+<div class="relative z-10 flex flex-col min-h-screen max-w-md mx-auto">
+
+<!-- ══════════════ HOME ══════════════ -->
+<div id="tab-home" class="tab active">
+  <div class="pt-safe px-5 pt-5 pb-2 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="subtitle">AI Наставник</p>
+        <h1 class="font-serif text-2xl gold-text font-light leading-tight">Stoic Mentor</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="glass rounded-2xl px-2 py-1.5 flex items-center gap-1">
+          <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
+          <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+        </div>
+        <div class="glass rounded-2xl px-3 py-2 flex items-center gap-1.5">
+          <div class="flex gap-1">
+            <div class="w-2.5 h-2.5 rounded-full credit-on" id="c1"></div>
+            <div class="w-2.5 h-2.5 rounded-full credit-on" id="c2"></div>
+            <div class="w-2.5 h-2.5 rounded-full credit-on" id="c3"></div>
+          </div>
+          <span class="text-xs text-soft font-medium" id="credit-label">3/3</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-4" id="home-scroll">
+
+    <!-- Quote -->
+    <div class="glass rounded-2xl p-4">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+          <i class="fa-solid fa-quote-left text-gold text-xs"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-xs text-muted uppercase tracking-widest mb-2 font-medium" data-i18n="quote_of_day">Цитата дня</p>
+          <p class="font-serif text-[15px] text-soft leading-snug italic font-light" id="daily-quote"></p>
+          <p class="text-gold-dim text-xs mt-2 font-light" id="daily-author"></p>
+        </div>
+      </div>
+      <div class="gold-line mt-3"></div>
+      <button onclick="loadNewQuote()" class="mt-3 text-xs text-muted flex items-center gap-1.5 hover:text-gold transition-colors">
+        <i class="fa-solid fa-rotate-right text-xs"></i> <span data-i18n="new_quote">Новая цитата</span>
+      </button>
+    </div>
+
+    <!-- Mentors -->
+    <div>
+      <p class="text-xs text-muted uppercase tracking-widest px-1 mb-3 font-medium" data-i18n="choose_mentor">Выбрать наставника</p>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style="scrollbar-width:none;">
+        <div class="glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[88px] cursor-pointer active:opacity-70" style="border:1px solid rgba(201,168,76,.3);" onclick="selectMentor('marcus')" id="mc-marcus">
+          <div class="w-11 h-11 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-crown" style="color:#C9A84C;"></i></div>
+          <p class="text-xs text-center text-soft font-medium leading-tight" id="lbl-marcus">Марк Аврелий</p>
+          <div class="w-1.5 h-1.5 rounded-full bg-gold" id="dot-marcus" style="box-shadow:0 0 6px rgba(201,168,76,.8);"></div>
+        </div>
+        <div class="glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[88px] cursor-pointer active:opacity-70" onclick="selectMentor('epictetus')" id="mc-epictetus">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.6);"><i class="fa-solid fa-person-walking" style="color:#6B6B9A;"></i></div>
+          <p class="text-xs text-center text-muted font-medium leading-tight" id="lbl-epictetus">Эпиктет</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-epictetus"></div>
+        </div>
+        <div class="glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[88px] cursor-pointer active:opacity-70" onclick="selectMentor('seneca')" id="mc-seneca">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.6);"><i class="fa-solid fa-feather" style="color:#6B6B9A;"></i></div>
+          <p class="text-xs text-center text-muted font-medium leading-tight" id="lbl-seneca">Сенека</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-seneca"></div>
+        </div>
+        <div class="glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[88px] cursor-pointer active:opacity-70" onclick="selectMentor('zeno')" id="mc-zeno">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.6);"><i class="fa-solid fa-circle-dot" style="color:#6B6B9A;"></i></div>
+          <p class="text-xs text-center text-muted font-medium leading-tight" id="lbl-zeno">Зенон</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-zeno"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask -->
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium flex items-center gap-2">
+        <i class="fa-solid fa-message text-gold text-xs"></i>
+        <span data-i18n="ask_mentor">Спросить наставника</span>
+      </p>
+      <textarea id="user-input" class="stoic-input" rows="3" placeholder="Что тебя беспокоит?..."></textarea>
+      <div class="flex items-center justify-between mt-3">
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="setChip(0)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors"></button>
+          <button onclick="setChip(1)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors"></button>
+          <button onclick="setChip(2)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors"></button>
+        </div>
+        <button id="send-btn" class="send-btn" onclick="askMentor()">
+          <i class="fa-solid fa-paper-plane" style="color:#080810;font-size:14px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Response -->
+    <div id="response-area" class="hidden glass rounded-2xl p-4 fade-up">
+      <div id="skel" class="hidden space-y-2.5">
+        <div class="skeleton h-3 w-3/4"></div><div class="skeleton h-3 w-full"></div>
+        <div class="skeleton h-3 w-5/6"></div><div class="skeleton h-3 w-2/3 mt-1"></div>
+        <div class="skeleton h-3 w-full"></div><div class="skeleton h-3 w-4/5"></div>
+      </div>
+      <div id="think" class="hidden flex items-center gap-2 py-1">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-brain text-gold text-xs"></i>
+        </div>
+        <div class="flex gap-1.5 items-center">
+          <div class="w-2 h-2 rounded-full bg-gold pd1"></div>
+          <div class="w-2 h-2 rounded-full bg-gold pd2"></div>
+          <div class="w-2 h-2 rounded-full bg-gold pd3"></div>
+          <span class="text-muted text-sm ml-1 font-light italic" data-i18n="thinking">Наставник размышляет...</span>
+        </div>
+      </div>
+      <div id="resp-content" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 glass-gold rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-scroll text-gold text-xs"></i>
+            </div>
+            <p class="text-xs text-muted uppercase tracking-widest font-medium" data-i18n="mentor_words">Слова наставника</p>
+          </div>
+          <span id="source-badge" class="pro-badge text-xs">Gemini AI</span>
+        </div>
+        <div class="gold-line mb-3"></div>
+        <p id="resp-text" class="font-serif text-[15px] text-soft leading-relaxed font-light italic"></p>
+        <div class="mt-3 flex gap-2">
+          <button onclick="saveToHistory()" class="flex-1 glass rounded-xl py-2 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+            <i class="fa-regular fa-bookmark text-gold"></i> <span data-i18n="save">Сохранить</span>
+          </button>
+          <button onclick="askFollowUp()" class="flex-1 glass rounded-xl py-2 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+            <i class="fa-solid fa-arrow-right text-gold"></i> <span data-i18n="continue_btn">Продолжить</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro card -->
+    <div class="rounded-2xl overflow-hidden" style="background:linear-gradient(135deg,rgba(201,168,76,.13) 0%,rgba(138,110,47,.07) 50%,rgba(17,17,32,.9) 100%);border:1px solid rgba(201,168,76,.25);">
+      <div class="p-4">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="flex items-center gap-2 mb-1"><i class="fa-solid fa-crown text-gold text-sm"></i><span class="pro-badge">PRO</span></div>
+            <h3 class="font-serif text-xl gold-text font-light">Stoic Pro</h3>
+            <p class="text-muted text-xs mt-0.5 font-light" data-i18n="pro_sub">Неограниченный доступ к мудрости</p>
+          </div>
+          <div class="text-right"><p class="text-gold text-xl font-semibold">$4.99</p><p class="text-muted text-xs" data-i18n="per_month">/ месяц</p></div>
+        </div>
+        <div class="space-y-2 mb-4">
+          <div class="flex items-center gap-2 text-xs text-soft"><i class="fa-solid fa-infinity text-gold w-3"></i><span data-i18n="pro_f1">Безлимитные запросы</span></div>
+          <div class="flex items-center gap-2 text-xs text-soft"><i class="fa-solid fa-moon text-gold w-3"></i><span data-i18n="pro_f2">Вечерние медитации</span></div>
+          <div class="flex items-center gap-2 text-xs text-soft"><i class="fa-solid fa-chart-line text-gold w-3"></i><span data-i18n="pro_f3">Трекер добродетелей</span></div>
+          <div class="flex items-center gap-2 text-xs text-soft"><i class="fa-solid fa-book-open text-gold w-3"></i><span data-i18n="pro_f4">Библиотека стоиков</span></div>
+        </div>
+        <button onclick="openPro()" class="w-full py-3 rounded-xl text-xs font-semibold tracking-wide active:opacity-70" style="background:linear-gradient(135deg,#E8C96A,#C9A84C);color:#080810;">
+          <i class="fa-solid fa-unlock mr-2"></i><span data-i18n="unlock_pro">Открыть Pro доступ</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Locked -->
+    <div class="space-y-3">
+      <p class="text-xs text-muted uppercase tracking-widest px-1 font-medium" data-i18n="advanced">Продвинутые практики</p>
+      <div class="glass rounded-2xl p-4 relative overflow-hidden">
+        <div class="lock-overlay rounded-2xl">
+          <div class="w-10 h-10 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-lock text-gold"></i></div>
+          <p class="text-xs text-muted font-medium" data-i18n="pro_only">Только для Pro</p>
+          <button onclick="openPro()" class="text-xs text-gold underline" data-i18n="unlock">Разблокировать</button>
+        </div>
+        <div class="opacity-25 flex items-center gap-3">
+          <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-shield-halved text-gold text-xs"></i></div>
+          <div><p class="text-sm text-soft font-medium" data-i18n="virtue_tracker">Трекер добродетелей</p><p class="text-xs text-muted" data-i18n="virtue_sub">Мудрость · Справедливость · Стойкость</p></div>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-4 relative overflow-hidden">
+        <div class="lock-overlay rounded-2xl">
+          <div class="w-10 h-10 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-lock text-gold"></i></div>
+          <p class="text-xs text-muted font-medium" data-i18n="pro_only">Только для Pro</p>
+          <button onclick="openPro()" class="text-xs text-gold underline" data-i18n="unlock">Разблокировать</button>
+        </div>
+        <div class="opacity-25 flex items-center gap-3">
+          <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-moon text-gold text-xs"></i></div>
+          <div><p class="text-sm text-soft font-medium" data-i18n="evening_ref">Вечерняя рефлексия</p><p class="text-xs text-muted" data-i18n="evening_sub">Персонализированные вопросы</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ══════════════ HISTORY ══════════════ -->
+<div id="tab-history" class="tab">
+  <div class="pt-safe px-5 pt-5 pb-3 flex-shrink-0">
+    <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="archive">Архив</p>
+    <h1 class="font-serif text-2xl gold-text font-light" data-i18n="history_title">История мудрости</h1>
+  </div>
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-3" id="history-list">
+    <div id="hist-empty" class="flex flex-col items-center justify-center h-48 text-center">
+      <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center mb-3"><i class="fa-regular fa-scroll text-muted text-xl"></i></div>
+      <p class="text-soft text-sm font-medium mb-1" data-i18n="hist_empty_title">Архив пуст</p>
+      <p class="text-muted text-xs font-light" data-i18n="hist_empty_sub">Сохранённые беседы появятся здесь</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SETTINGS ══════════════ -->
+<div id="tab-settings" class="tab">
+  <div class="pt-safe px-5 pt-5 pb-3 flex-shrink-0">
+    <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="settings_sub">Персонализация</p>
+    <h1 class="font-serif text-2xl gold-text font-light" data-i18n="settings_title">Настройки</h1>
+  </div>
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+    <div class="glass rounded-2xl p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-person-praying text-gold text-lg"></i></div>
+        <div class="flex-1"><p class="text-soft font-medium text-sm" data-i18n="student">Ученик Стои</p><p class="text-muted text-xs font-light" data-i18n="free_plan">Бесплатный план · 3 запроса/день</p></div>
+        <span class="pro-badge">FREE</span>
+      </div>
+      <div class="gold-line my-3"></div>
+      <button onclick="openPro()" class="w-full py-2.5 rounded-xl text-xs font-semibold tracking-wide" style="background:linear-gradient(135deg,#E8C96A,#C9A84C);color:#080810;">
+        <i class="fa-solid fa-crown mr-2"></i><span data-i18n="upgrade_pro">Перейти на Pro</span>
+      </button>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium" data-i18n="language">Язык / Language</p>
+      <div class="flex gap-3">
+        <button onclick="setLang('ru')" id="lang-btn-ru" class="flex-1 py-2.5 rounded-xl text-sm font-medium glass transition-all" style="border:1px solid rgba(201,168,76,.3);color:#C9A84C;">🇷🇺 Русский</button>
+        <button onclick="setLang('en')" id="lang-btn-en" class="flex-1 py-2.5 rounded-xl text-sm font-medium glass transition-all" style="color:#6B6B9A;">🇬🇧 English</button>
+      </div>
+    </div>
+    <div class="glass rounded-2xl overflow-hidden">
+      <p class="text-xs text-muted uppercase tracking-widest px-4 pt-4 pb-2 font-medium" data-i18n="notifications">Уведомления</p>
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3"><i class="fa-solid fa-sun text-gold w-4 text-sm"></i><p class="text-sm text-soft" data-i18n="morning">Утренняя медитация</p></div>
+        <div class="toggle-track on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="gold-line mx-4"></div>
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3"><i class="fa-solid fa-moon text-gold w-4 text-sm"></i><p class="text-sm text-soft" data-i18n="evening_notif">Вечерняя рефлексия</p></div>
+        <div class="toggle-track" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-2 font-medium" data-i18n="active_mentor">Активный наставник</p>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center"><i class="fa-solid fa-crown text-gold text-xs"></i></div>
+        <p class="text-soft text-sm font-medium" id="active-mentor-label">Марк Аврелий</p>
+      </div>
+    </div>
+    <div class="glass rounded-2xl p-4">
+      <button onclick="clearHistory()" class="w-full py-2.5 rounded-xl text-sm font-medium glass text-muted border border-border hover:text-soft transition-colors">
+        <i class="fa-solid fa-trash mr-2 text-xs"></i><span data-i18n="clear_history">Очистить историю</span>
+      </button>
+    </div>
+    <div class="glass rounded-2xl p-4 text-center">
+      <div class="w-10 h-10 glass-gold rounded-xl flex items-center justify-center mx-auto mb-2"><i class="fa-solid fa-infinity text-gold"></i></div>
+      <p class="font-serif text-lg gold-text font-light">Stoic Mentor</p>
+      <p class="text-muted text-xs font-light mt-0.5">v1.0.0 · Gemini AI</p>
+      <p class="text-muted text-xs mt-3 font-serif italic font-light">«Memento mori. Amor fati.»</p>
+    </div>
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav safe-bottom flex-shrink-0">
+  <div class="flex items-center justify-around px-4 pt-2 pb-1">
+    <button class="nav-item active flex flex-col items-center gap-1 py-1 px-4" onclick="switchTab('home',this)">
+      <i class="nav-icon fa-solid fa-compass text-xl"></i><span class="nav-label" data-i18n="nav_home">Главная</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-1 py-1 px-4" onclick="switchTab('history',this)">
+      <i class="nav-icon fa-regular fa-scroll text-xl"></i><span class="nav-label" data-i18n="nav_history">История</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-1 py-1 px-4" onclick="switchTab('settings',this)">
+      <i class="nav-icon fa-solid fa-gear text-xl"></i><span class="nav-label" data-i18n="nav_settings">Настройки</span>
+    </button>
+  </div>
+</nav>
+</div>
+
+<!-- ══════════════ PRO MODAL ══════════════ -->
+<div id="pro-modal" class="fixed inset-0 z-50 hidden items-end justify-center" style="background:rgba(0,0,0,.72);backdrop-filter:blur(8px);">
+  <div class="glass rounded-t-3xl p-6 w-full max-w-md" style="border-top:1px solid rgba(201,168,76,.2);">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-5"></div>
+    <div class="text-center mb-5">
+      <div class="w-14 h-14 glass-gold rounded-2xl flex items-center justify-center mx-auto mb-3"><i class="fa-solid fa-crown text-gold text-2xl"></i></div>
+      <h2 class="font-serif text-2xl gold-text font-light">Stoic Pro</h2>
+      <p class="text-muted text-sm font-light mt-1" data-i18n="pro_desc">Полный доступ к мудрости стоиков</p>
+    </div>
+    <div class="space-y-2 mb-5">
+      <div class="glass rounded-xl p-3 flex items-center gap-3"><i class="fa-solid fa-infinity text-gold w-4"></i><p class="text-sm text-soft" data-i18n="pro_f1">Безлимитные запросы</p></div>
+      <div class="glass rounded-xl p-3 flex items-center gap-3"><i class="fa-solid fa-moon text-gold w-4"></i><p class="text-sm text-soft" data-i18n="pro_f2">Вечерние медитации</p></div>
+      <div class="glass rounded-xl p-3 flex items-center gap-3"><i class="fa-solid fa-chart-line text-gold w-4"></i><p class="text-sm text-soft" data-i18n="pro_f3">Трекер добродетелей</p></div>
+      <div class="glass rounded-xl p-3 flex items-center gap-3"><i class="fa-solid fa-book-open text-gold w-4"></i><p class="text-sm text-soft" data-i18n="pro_f4">Библиотека стоиков</p></div>
+    </div>
+    <div class="flex gap-3 mb-3">
+      <div class="flex-1 glass rounded-xl p-3 text-center"><p class="text-gold text-lg font-semibold">$4.99</p><p class="text-muted text-xs" data-i18n="per_month">/ месяц</p></div>
+      <div class="flex-1 rounded-xl p-3 text-center" style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);"><p class="text-gold text-lg font-semibold">$39.99</p><p class="text-muted text-xs" data-i18n="per_year">/ год −33%</p></div>
+    </div>
+    <a href="https://buy.stripe.com/your-link" target="_blank" class="block w-full py-3.5 rounded-xl text-xs font-semibold tracking-wide text-center mb-3" style="background:linear-gradient(135deg,#E8C96A,#C9A84C);color:#080810;">
+      <i class="fa-solid fa-lock-open mr-2"></i><span data-i18n="unlock_pro_cta">Открыть Pro — $4.99/мес</span>
+    </a>
+    <button onclick="closeProModal()" class="w-full py-2 text-muted text-sm" data-i18n="later">Позже</button>
+  </div>
+</div>
+
+<!-- ══════════════ TOAST ══════════════ -->
+<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 hidden glass-gold rounded-2xl px-4 py-2.5" style="box-shadow:0 0 30px rgba(201,168,76,.2);max-width:85vw;">
+  <p id="toast-text" class="text-sm text-soft flex items-center gap-2 whitespace-nowrap">
+    <i id="toast-icon" class="fa-solid fa-check text-gold"></i><span></span>
+  </p>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────
+const GEMINI_KEY = 'AIzaSyDFfmC_vbBq4uFg3WA3ytD76vTdNM0h-uM';
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
+
+// ─── TRANSLATIONS ─────────────────────────────────────────────────
+const T = {
+  ru:{
+    subtitle:'AI Наставник',quote_of_day:'Цитата дня',new_quote:'Новая цитата',
+    choose_mentor:'Выбрать наставника',ask_mentor:'Спросить наставника',
+    thinking:'Наставник размышляет...',mentor_words:'Слова наставника',
+    save:'Сохранить',continue_btn:'Продолжить',
+    pro_sub:'Неограниченный доступ к мудрости',per_month:'/ месяц',per_year:'/ год −33%',
+    pro_f1:'Безлимитные запросы',pro_f2:'Вечерние медитации',pro_f3:'Трекер добродетелей',pro_f4:'Библиотека стоиков',
+    unlock_pro:'Открыть Pro доступ',unlock_pro_cta:'Открыть Pro — $4.99/мес',
+    advanced:'Продвинутые практики',pro_only:'Только для Pro',unlock:'Разблокировать',
+    virtue_tracker:'Трекер добродетелей',virtue_sub:'Мудрость · Справедливость · Стойкость',
+    evening_ref:'Вечерняя рефлексия',evening_sub:'Персонализированные вопросы',
+    archive:'Архив',history_title:'История мудрости',
+    hist_empty_title:'Архив пуст',hist_empty_sub:'Сохранённые беседы появятся здесь',
+    settings_sub:'Персонализация',settings_title:'Настройки',language:'Язык / Language',
+    student:'Ученик Стои',free_plan:'Бесплатный план · 3 запроса/день',
+    upgrade_pro:'Перейти на Pro',notifications:'Уведомления',
+    morning:'Утренняя медитация',evening_notif:'Вечерняя рефлексия',
+    active_mentor:'Активный наставник',clear_history:'Очистить историю',
+    nav_home:'Главная',nav_history:'История',nav_settings:'Настройки',
+    pro_desc:'Полный доступ к мудрости стоиков',later:'Позже',
+    toast_saved:'Сохранено в архив',toast_cleared:'История очищена',toast_mentor:'Наставник: ',
+    notice_demo:'Демо-режим. В реальном APK работает Gemini AI.',
+    placeholder:'Что тебя беспокоит? Какое решение ты ищешь?...',
+    chips:['тревога','принятие','цель'],
+    chip_prompts:['Как справиться с тревогой и страхом?','Как принять то, что невозможно изменить?','Как найти цель и смысл в жизни?'],
+    mentor_names:{marcus:'Марк Аврелий',epictetus:'Эпиктет',seneca:'Сенека',zeno:'Зенон'},
+    follow:'Расскажи подробнее и дай практическое упражнение',
+  },
+  en:{
+    subtitle:'AI Guide',quote_of_day:'Quote of the Day',new_quote:'New Quote',
+    choose_mentor:'Choose Mentor',ask_mentor:'Ask the Mentor',
+    thinking:'The mentor is contemplating...',mentor_words:'Words of the Mentor',
+    save:'Save',continue_btn:'Continue',
+    pro_sub:'Unlimited access to wisdom',per_month:'/ month',per_year:'/ year −33%',
+    pro_f1:'Unlimited queries',pro_f2:'Evening meditations',pro_f3:'Virtue tracker',pro_f4:'Stoic library',
+    unlock_pro:'Unlock Pro Access',unlock_pro_cta:'Unlock Pro — $4.99/mo',
+    advanced:'Advanced Practices',pro_only:'Pro Only',unlock:'Unlock',
+    virtue_tracker:'Virtue Tracker',virtue_sub:'Wisdom · Justice · Fortitude',
+    evening_ref:'Evening Reflection',evening_sub:'Personalized self-analysis questions',
+    archive:'Archive',history_title:'Wisdom History',
+    hist_empty_title:'Archive is empty',hist_empty_sub:'Saved conversations will appear here',
+    settings_sub:'Personalization',settings_title:'Settings',language:'Язык / Language',
+    student:'Student of the Stoa',free_plan:'Free plan · 3 queries/day',
+    upgrade_pro:'Upgrade to Pro',notifications:'Notifications',
+    morning:'Morning meditation',evening_notif:'Evening reflection',
+    active_mentor:'Active Mentor',clear_history:'Clear History',
+    nav_home:'Home',nav_history:'History',nav_settings:'Settings',
+    pro_desc:'Full access to Stoic wisdom',later:'Later',
+    toast_saved:'Saved to archive',toast_cleared:'History cleared',toast_mentor:'Mentor: ',
+    notice_demo:'Demo mode. Real Gemini AI works in the APK.',
+    placeholder:'What troubles you? What guidance do you seek?...',
+    chips:['anxiety','acceptance','purpose'],
+    chip_prompts:['How do I deal with anxiety and fear?','How do I accept what I cannot change?','How do I find purpose and meaning in life?'],
+    mentor_names:{marcus:'Marcus Aurelius',epictetus:'Epictetus',seneca:'Seneca',zeno:'Zeno'},
+    follow:'Please elaborate and give me a practical daily exercise',
+  }
+};
+
+// ─── DEMO RESPONSES ──────────────────────────────────────────────
+const DEMO = {
+  marcus:{
+    ru:['Потери нет там, где есть только возврат к природе. Всё, что у тебя есть, было дано лишь во временное пользование. Твоя душа — вот единственное, чем ты владеешь по-настоящему. Береги её от суеты и страха. Настоящий момент — твой единственный дом.','Не трать время, размышляя о том, каким должен быть другой человек. Размышляй о том, каким должен быть ты сам. Это единственная власть, которой ты обладаешь. Сосредоточься на ней — и мир переменится вокруг тебя.','Тревога рождается из сопротивления тому, что есть. Прими настоящий момент без борьбы — и тревога растворится, как туман под лучами утреннего солнца. Природа мудра: она даёт нам ровно столько, сколько мы способны вынести.','Всё проходящее — дым. Ничто не постоянно, кроме перемен. Позволь этому знанию освободить тебя от привязанностей, которые причиняют боль.'],
+    en:['You have power over your mind, not outside events. Realize this, and you will find strength. The obstacle is the way — what stands in the way becomes the way forward. Embrace resistance as your teacher.','Waste no more time arguing about what a good person should be. Be one. Every moment is an opportunity to act with virtue and wisdom. This is the only battle worth fighting.','The universe is change; our life is what our thoughts make it. Choose thoughts that serve you, and the world will shift accordingly. Guard your inner citadel fiercely.','Confine yourself to the present. The past is gone, the future is not yet. Only this moment belongs to you — live it with full attention and noble purpose.'],
+  },
+  epictetus:{
+    ru:['Не ищи, чтобы события происходили так, как ты хочешь. Желай, чтобы всё происходящее случалось именно так — и у тебя будет спокойный поток жизни. Это не слабость, а высшая форма мудрости.','Людей беспокоят не события, а их суждения о событиях. Измени суждение — и страдание исчезнет само собой. Ты не жертва обстоятельств, ты — тот, кто выбирает реакцию.','В твоей власти: суждение, желание, избегание. Не в твоей власти: тело, слава, власть над другими. Сосредоточься на первом — и ты станешь поистине неуязвим для судьбы.','Ты — не своё тело и не свои обстоятельства. Ты — тот, кто наблюдает. И этот наблюдатель всегда свободен, всегда невредим, всегда дома.'],
+    en:['Make the best use of what is in your power, and take the rest as it happens. Freedom is not refusing what you cannot control, but ceasing to want it. This is the path to lasting peace.','He is wise who does not grieve for the things he has not, but rejoices for those he has. Gratitude is not passive — it is an active choice made daily, hourly.','Seek not that things happen as you wish; but wish things to be as they are, and you will have a tranquil flow of life. This single insight can transform everything.','First say to yourself what you would be; then do what you have to do. Identity precedes action. Decide who you are — your conduct will follow naturally.'],
+  },
+  seneca:{
+    ru:['Пока ты откладываешь — жизнь проносится мимо. Настоящее — единственная собственность, которую никто не может отнять. Не жди идеального момента: этот момент и есть тот самый. Живи сейчас, с полной отдачей.','Omnia aliena sunt, tempus tantum nostrum est. Всё чужое — только время наше. Береги каждый час так, как скупец бережёт каждую монету. Потраченное время не возвращается никогда.','Не бойся медленно двигаться вперёд. Бойся стоять на месте. Малое усилие каждый день превращается в огромное достижение за годы. Начни сегодня — любым шагом.','Философия обещает прежде всего здравый смысл и человечность. Учёность без мудрости — лишь груз, а не крылья. Изучай жизнь, а не только книги.'],
+    en:['It is not that I am brave — it is that I know what matters. Time is the one truly non-renewable resource. Spend it on what is worthy of your finest self, and let the rest go.','Retire into yourself as much as you can. Associate with people who are likely to improve you. Protect the quality of your inner world as fiercely as a general protects his city.','Every new beginning comes from some other beginning\'s end. Embrace endings as gateways, not as losses. The Stoic welcomes transformation because he knows his true self cannot be harmed.','Begin at once to live, and count each separate day as a separate life. Death reminds us not to mourn but to act, not to wait but to be present, completely and deliberately.'],
+  },
+  zeno:{
+    ru:['Цель человеческой жизни — жить в согласии с природой. Природа разумна. Разум добродетелен. Добродетель достаточна для счастья. Это не теория — это практика каждого дня.','У нас два уха и один рот, чтобы мы больше слушали и меньше говорили. Молчание — тоже речь, и часто самая мудрая из всех возможных ответов.','Не стремись ни к чему, кроме совершенствования разума. Внешнее придёт или уйдёт — только мудрость остаётся навсегда. Это единственное богатство, которое нельзя потерять.','Добродетель — не средство для достижения счастья. Добродетель и есть счастье. Как только ты это поймёшь, погоня за внешним прекратится сама собой.'],
+    en:['The goal of human life is to live in agreement with nature. Nature is rational. Reason is virtue. Virtue is sufficient for happiness. Once grasped, this truth simplifies everything.','We have two ears and one mouth so that we can listen twice as much as we speak. Silence is itself a form of wisdom — often the most powerful response available.','The highest good is virtue; everything else is indifferent. Once you truly grasp this, the anxieties of ordinary life dissolve completely, like morning mist in sunlight.','Progress is not in acquiring things but in removing unnecessary desires. Each desire removed is a chain broken, a freedom gained. Simplify, and find you already have everything.'],
+  }
+};
+
+const QUOTES = {
+  ru:[
+    {t:'Разум — вот что отличает нас от животных и позволяет нам стать богами.',a:'Марк Аврелий'},
+    {t:'Не ищи, чтобы всё происходящее случалось так, как ты хочешь.',a:'Эпиктет'},
+    {t:'Пока откладываешь — жизнь проносится мимо.',a:'Сенека'},
+    {t:'Потери нет там, где есть только возврат к природе.',a:'Марк Аврелий'},
+    {t:'Человек страдает не от событий, а от суждений о событиях.',a:'Эпиктет'},
+    {t:'Omnia aliena sunt, tempus tantum nostrum est.',a:'Сенека'},
+    {t:'Веди себя так, словно жизнь — лишь один день.',a:'Марк Аврелий'},
+  ],
+  en:[
+    {t:'You have power over your mind, not outside events. Realize this, and you will find strength.',a:'Marcus Aurelius'},
+    {t:'Men are disturbed not by things, but by the opinions about things.',a:'Epictetus'},
+    {t:'All things are alien; time alone is ours.',a:'Seneca'},
+    {t:'The obstacle is the way.',a:'Marcus Aurelius'},
+    {t:'Seek not that the things which happen should happen as you wish.',a:'Epictetus'},
+    {t:'Begin at once to live, and count each separate day as a separate life.',a:'Seneca'},
+    {t:'We suffer more in imagination than in reality.',a:'Seneca'},
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────────
+let credits = 3;
+const MAX = 3;
+let mentor = 'marcus';
+let lang = localStorage.getItem('stoic_lang') || 'ru';
+let curQ = '', curA = '';
+let hist = JSON.parse(localStorage.getItem('stoic_hist') || '[]');
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+const t = k => (T[lang]||T.ru)[k] || k;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ─── LANG ─────────────────────────────────────────────────────────
+function setLang(l){
+  lang=l; localStorage.setItem('stoic_lang',l);
+  // header toggles
+  ['ru','en'].forEach(x=>{
+    const hb=document.getElementById('lang-'+x);
+    if(hb) hb.classList.toggle('active',x===l);
+    const sb=document.getElementById('lang-btn-'+x);
+    if(sb){
+      sb.style.borderColor = x===l ? 'rgba(201,168,76,.3)' : 'transparent';
+      sb.style.color = x===l ? '#C9A84C' : '#6B6B9A';
+    }
+  });
+  applyI18n();
+  updateChips();
+  loadNewQuote();
+  renderMentorNames();
+  updateMentorUI();
+  document.getElementById('user-input').placeholder = t('placeholder');
+  document.getElementById('active-mentor-label').textContent = t('mentor_names')[mentor];
+  renderHistory();
+}
+
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(T[lang][k]!==undefined) el.textContent=T[lang][k];
+  });
+}
+
+function updateChips(){
+  const chips=document.querySelectorAll('.chip');
+  const names=t('chips');
+  chips.forEach((c,i)=>{ if(names[i]) c.textContent=names[i]; });
+}
+
+function setChip(i){
+  const prompts=t('chip_prompts');
+  document.getElementById('user-input').value=prompts[i]||'';
+}
+
+// ─── QUOTE ────────────────────────────────────────────────────────
+function loadNewQuote(){
+  const arr=QUOTES[lang]||QUOTES.ru;
+  const q=arr[Math.floor(Math.random()*arr.length)];
+  const el=document.getElementById('daily-quote');
+  const au=document.getElementById('daily-author');
+  el.style.transition='opacity .3s';el.style.opacity=0;
+  setTimeout(()=>{ el.textContent=`«${q.t}»`; au.textContent=`— ${q.a}`; el.style.opacity=1; },250);
+}
+
+// ─── MENTOR ───────────────────────────────────────────────────────
+function selectMentor(id){
+  mentor=id;
+  updateMentorUI();
+  const name=t('mentor_names')[id]||id;
+  document.getElementById('active-mentor-label').textContent=name;
+  showToast(t('toast_mentor')+name,'info');
+}
+
+function renderMentorNames(){
+  const names=t('mentor_names');
+  ['marcus','epictetus','seneca','zeno'].forEach(id=>{
+    const el=document.getElementById('lbl-'+id);
+    if(el&&names[id]) el.textContent=names[id];
+  });
+}
+
+function updateMentorUI(){
+  ['marcus','epictetus','seneca','zeno'].forEach(id=>{
+    const card=document.getElementById('mc-'+id);
+    const dot=document.getElementById('dot-'+id);
+    const lbl=document.getElementById('lbl-'+id);
+    if(!card)return;
+    const on=id===mentor;
+    card.style.borderColor=on?'rgba(201,168,76,.35)':'rgba(255,255,255,.06)';
+    const ico=card.querySelector('.w-11');
+    if(ico){
+      ico.className='w-11 h-11 rounded-xl flex items-center justify-center'+(on?' glass-gold':'');
+      ico.style.background=on?'':'rgba(37,37,69,.6)';
+      const i=ico.querySelector('i');
+      if(i) i.style.color=on?'#C9A84C':'#6B6B9A';
+    }
+    if(dot){
+      dot.className=on?'w-1.5 h-1.5 rounded-full bg-gold':'w-1.5 h-1.5 rounded-full border border-muted';
+      dot.style.boxShadow=on?'0 0 6px rgba(201,168,76,.8)':'';
+    }
+    if(lbl) lbl.className='text-xs text-center font-medium leading-tight '+(on?'text-soft':'text-muted');
+  });
+}
+
+// ─── CREDITS ──────────────────────────────────────────────────────
+function updateCredits(){
+  for(let i=1;i<=MAX;i++){
+    const el=document.getElementById('c'+i);
+    if(el) el.className='w-2.5 h-2.5 rounded-full '+(i<=credits?'credit-on':'credit-off');
+  }
+  document.getElementById('credit-label').textContent=`${credits}/${MAX}`;
+}
+
+// ─── ASK MENTOR ───────────────────────────────────────────────────
+async function askMentor(){
+  const inp=document.getElementById('user-input');
+  const q=(inp.value||'').trim();
+  if(!q){showToast(lang==='ru'?'Введите вопрос':'Enter your question','warn');return;}
+  if(credits<=0){openPro();return;}
+
+  credits--; updateCredits(); curQ=q;
+
+  const ra=document.getElementById('response-area');
+  const sk=document.getElementById('skel');
+  const th=document.getElementById('think');
+  const rc=document.getElementById('resp-content');
+  const btn=document.getElementById('send-btn');
+
+  ra.classList.remove('hidden');
+  sk.classList.remove('hidden');
+  th.classList.remove('hidden');
+  rc.classList.add('hidden');
+  btn.disabled=true;
+
+  setTimeout(()=>ra.scrollIntoView({behavior:'smooth',block:'nearest'}),120);
+
+  // Build system prompt
+  const mentorMap={
+    marcus:'Marcus Aurelius, Roman Emperor and Stoic philosopher (121–180 AD), author of Meditations',
+    epictetus:'Epictetus, a freed slave who became a great Stoic philosopher (50–135 AD)',
+    seneca:'Seneca the Younger, Roman statesman and Stoic philosopher (4 BC – 65 AD), author of Letters',
+    zeno:'Zeno of Citium, founder of Stoic philosophy (334–262 BC)',
+  };
+  const langLine = lang==='ru'
+    ? 'Отвечай ТОЛЬКО на русском языке.'
+    : 'Respond ONLY in English.';
+  const sys = `You are ${mentorMap[mentor]}. Speak in first person as this philosopher. Apply Stoic wisdom: dichotomy of control, amor fati, memento mori, virtue as the highest good. Be concise (3–5 sentences), profound and practical. Begin with the essence — no greetings. Use a noble, slightly archaic tone. ${langLine}`;
+
+  let answered = false;
+
+  try {
+    const res = await Promise.race([
+      fetch(GEMINI_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{role:'user',parts:[{text:q}]}],
+          systemInstruction:{parts:[{text:sys}]},
+          generationConfig:{temperature:0.87,maxOutputTokens:300,topK:40,topP:0.95}
+        })
+      }),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
+    ]);
+
+    if(!res.ok){ const d=await res.json().catch(()=>({})); throw new Error(d?.error?.message||'HTTP '+res.status); }
+    const data=await res.json();
+    const text=data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if(!text) throw new Error('empty');
+
+    curA=text;
+    sk.classList.add('hidden'); th.classList.add('hidden');
+    showResponse(text,'Gemini AI',false);
+    answered=true;
+
+  } catch(err){
+    console.warn('Gemini error:',err.message);
+  }
+
+  // Graceful fallback
+  if(!answered){
+    const pool=DEMO[mentor][lang];
+    const answer=pool[Math.floor(Math.random()*pool.length)];
+    curA=answer;
+    sk.classList.add('hidden'); th.classList.add('hidden');
+    showResponse(answer,t('notice_demo'),true);
+    credits++; updateCredits(); // refund on fallback
+  }
+
+  btn.disabled=false;
+}
+
+function showResponse(text,badgeText,isDemo){
+  const rc=document.getElementById('resp-content');
+  const badge=document.getElementById('source-badge');
+  rc.classList.remove('hidden');
+  badge.textContent=badgeText;
+  badge.className=isDemo?'demo-badge text-xs':'pro-badge text-xs';
+  typewriter(document.getElementById('resp-text'),text);
+}
+
+// ─── TYPEWRITER ───────────────────────────────────────────────────
+function typewriter(el,text){
+  el.textContent='';
+  const cur=document.createElement('span');cur.className='cursor';el.appendChild(cur);
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i<text.length){el.insertBefore(document.createTextNode(text[i]),cur);i++;}
+    else{clearInterval(iv);cur.remove();}
+  },16);
+}
+
+function askFollowUp(){
+  document.getElementById('user-input').value=t('follow');
+  document.getElementById('user-input').focus();
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────
+function saveToHistory(){
+  if(!curQ||!curA)return;
+  hist.unshift({id:Date.now(),question:curQ,answer:curA,mentor:t('mentor_names')[mentor]||mentor,
+    date:new Date().toLocaleDateString(lang==='ru'?'ru-RU':'en-US',{day:'numeric',month:'short'})});
+  if(hist.length>50) hist.pop();
+  localStorage.setItem('stoic_hist',JSON.stringify(hist));
+  renderHistory();
+  showToast(t('toast_saved'));
+}
+
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  const empty=document.getElementById('hist-empty');
+  list.querySelectorAll('.hi').forEach(e=>e.remove());
+  if(!hist.length){empty.style.display='flex';return;}
+  empty.style.display='none';
+  hist.forEach(item=>{
+    const d=document.createElement('div');d.className='hi glass rounded-2xl p-4 fade-up';
+    d.innerHTML=`<div class="flex items-start justify-between gap-2 mb-2">
+      <p class="text-sm text-soft font-medium leading-snug">${esc(item.question)}</p>
+      <span class="text-xs text-muted flex-shrink-0">${esc(item.date)}</span></div>
+      <p class="text-xs text-muted font-serif italic leading-relaxed line-clamp-2">${esc(item.answer)}</p>
+      <div class="flex items-center gap-2 mt-2"><i class="fa-solid fa-scroll text-gold text-xs"></i><span class="text-xs text-muted">${esc(item.mentor)}</span></div>`;
+    list.appendChild(d);
+  });
+}
+
+function clearHistory(){
+  hist=[];localStorage.removeItem('stoic_hist');
+  renderHistory();showToast(t('toast_cleared'));
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── PRO ──────────────────────────────────────────────────────────
+function openPro(){const m=document.getElementById('pro-modal');m.classList.remove('hidden');m.classList.add('flex');}
+function closeProModal(){const m=document.getElementById('pro-modal');m.classList.add('hidden');m.classList.remove('flex');}
+document.getElementById('pro-modal').addEventListener('click',function(e){if(e.target===this)closeProModal();});
+
+// ─── TOAST ────────────────────────────────────────────────────────
+let toastTm;
+function showToast(msg,type){
+  const el=document.getElementById('toast');
+  const ico=document.getElementById('toast-icon');
+  el.querySelector('span').textContent=msg;
+  ico.className='fa-solid text-gold '+(type==='warn'?'fa-triangle-exclamation':'fa-check');
+  el.classList.remove('hidden');
+  clearTimeout(toastTm);
+  toastTm=setTimeout(()=>el.classList.add('hidden'),3000);
+}
+
+// ─── ENTER ────────────────────────────────────────────────────────
+document.getElementById('user-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&window.innerWidth>600){e.preventDefault();askMentor();}
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────
+(function(){
+  const today=new Date().toDateString();
+  if(localStorage.getItem('stoic_reset')!==today){
+    credits=MAX;localStorage.setItem('stoic_reset',today);
+  } else {
+    credits=Math.max(0,parseInt(localStorage.getItem('stoic_cred')||'3'));
+  }
+  window.addEventListener('beforeunload',()=>localStorage.setItem('stoic_cred',credits));
+  setLang(lang);
+  loadNewQuote();
+  renderHistory();
+  updateCredits();
+  selectMentor('marcus');
+})();
+</script>
+</body>
+</html>
