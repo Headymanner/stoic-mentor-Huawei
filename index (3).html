@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#080810" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>AI Stoic Mentor</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { serif:['Cormorant Garamond','serif'], sans:['Outfit','sans-serif'] },
+          colors: {
+            obsidian:'#080810', gold:'#C9A84C', 'gold-light':'#E8C96A',
+            'gold-dim':'#8A6E2F', muted:'#6B6B9A', soft:'#A0A0C0', border:'#252545'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *{-webkit-tap-highlight-color:transparent;box-sizing:border-box;}
+    body{background:#080810;font-family:'Outfit',sans-serif;color:#E8E8FF;min-height:100vh;overscroll-behavior:none;margin:0;}
+    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.35;}
+    .ambient{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:80vw;height:60vh;background:radial-gradient(ellipse,rgba(201,168,76,.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+    /* Glass */
+    .glass{background:rgba(17,17,32,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);}
+    .glass-gold{background:rgba(201,168,76,.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,.22);}
+    .gold-text{background:linear-gradient(135deg,#E8C96A 0%,#C9A84C 50%,#8A6E2F 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent);}
+
+    /* Nav */
+    .bottom-nav{background:rgba(8,8,16,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,.06);}
+    .nav-item .nav-icon{color:#6B6B9A;transition:color .2s;}
+    .nav-item .nav-label{color:#6B6B9A;transition:color .2s;font-size:10px;}
+    .nav-item.active .nav-icon,.nav-item.active .nav-label{color:#C9A84C;}
+
+    /* Tabs */
+    .tab{display:none;}
+    .tab.active{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+
+    /* Input */
+    .stoic-input{background:rgba(17,17,32,.9);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:#E8E8FF;font-family:'Outfit',sans-serif;font-size:15px;resize:none;outline:none;transition:border-color .3s;width:100%;padding:14px 16px;}
+    .stoic-input:focus{border-color:rgba(201,168,76,.45);}
+    .stoic-input::placeholder{color:#6B6B9A;}
+
+    /* Buttons */
+    .send-btn{background:linear-gradient(135deg,#C9A84C,#8A6E2F);border-radius:14px;border:none;width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s,transform .1s;flex-shrink:0;}
+    .send-btn:active{transform:scale(.92);opacity:.8;}
+    .send-btn:disabled{opacity:.3;cursor:not-allowed;}
+    .btn-gold{background:linear-gradient(135deg,#E8C96A,#C9A84C);color:#080810;border:none;border-radius:14px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;transition:opacity .2s,transform .1s;}
+    .btn-gold:active{opacity:.8;transform:scale(.98);}
+
+    /* Skeleton */
+    @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+    .skeleton{background:linear-gradient(90deg,rgba(37,37,69,.8) 25%,rgba(60,60,100,.9) 50%,rgba(37,37,69,.8) 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:8px;}
+
+    /* Animations */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .45s ease forwards;}
+    @keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+    .pd1{animation:pulseDot 1s infinite;}
+    .pd2{animation:pulseDot 1s .2s infinite;}
+    .pd3{animation:pulseDot 1s .4s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .cursor{display:inline-block;width:2px;height:1em;background:#C9A84C;margin-left:2px;vertical-align:text-bottom;animation:blink .7s infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spin{animation:spin 1s linear infinite;}
+
+    /* Lang */
+    .lang-btn{font-size:11px;font-weight:600;letter-spacing:.5px;padding:3px 10px;border-radius:12px;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+    .lang-btn.active{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.35);color:#C9A84C;}
+    .lang-btn:not(.active){color:#6B6B9A;}
+
+    /* Mentor cards */
+    .mentor-card{cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,.06);}
+    .mentor-card.active{border-color:rgba(201,168,76,.4);}
+    .mentor-card:active{opacity:.7;}
+
+    /* Toggle */
+    .toggle-track{width:44px;height:24px;background:rgba(37,37,69,1);border-radius:12px;position:relative;transition:background .3s;cursor:pointer;border:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+    .toggle-track.on{background:rgba(201,168,76,.3);border-color:rgba(201,168,76,.3);}
+    .toggle-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;background:#6B6B9A;border-radius:50%;transition:transform .25s,background .25s;}
+    .toggle-track.on .toggle-thumb{transform:translateX(20px);background:#C9A84C;}
+
+    /* Virtue tracker */
+    .virtue-bar-bg{background:rgba(37,37,69,.8);border-radius:8px;height:6px;overflow:hidden;}
+    .virtue-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#C9A84C,#E8C96A);transition:width .6s ease;}
+
+    /* History */
+    .hist-item{transition:background .2s;}
+    .hist-item:active{background:rgba(201,168,76,.05);}
+
+    /* Reflection card */
+    .reflection-input{background:rgba(17,17,32,.7);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:#E8E8FF;font-family:'Outfit',sans-serif;font-size:14px;resize:none;outline:none;transition:border-color .3s;width:100%;padding:12px 14px;}
+    .reflection-input:focus{border-color:rgba(201,168,76,.4);}
+    .reflection-input::placeholder{color:#6B6B9A;}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:2px;}
+    ::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:4px;}
+
+    /* Safe area */
+    .safe-bottom{padding-bottom:env(safe-area-inset-bottom,16px);}
+    .pt-safe{padding-top:env(safe-area-inset-top,0px);}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  </style>
+</head>
+
+<body class="relative">
+<div class="ambient"></div>
+<div class="relative z-10 flex flex-col min-h-screen max-w-md mx-auto">
+
+<!-- ═══════════════════════════════════════════
+     TAB: HOME
+═══════════════════════════════════════════ -->
+<div id="tab-home" class="tab active">
+
+  <!-- Header -->
+  <div class="pt-safe px-5 pt-5 pb-2 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="icon-192.png" alt="logo" class="w-9 h-9 rounded-xl object-cover" onerror="this.style.display='none'" />
+        <div>
+          <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="subtitle">AI Наставник</p>
+          <h1 class="font-serif text-xl gold-text font-light leading-tight">Stoic Mentor</h1>
+        </div>
+      </div>
+      <div class="glass rounded-2xl px-2 py-1.5 flex items-center gap-1">
+        <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll area -->
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+
+    <!-- Quote card -->
+    <div class="glass rounded-2xl p-4 fade-up">
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+          <i class="fa-solid fa-quote-left text-gold text-xs"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-muted uppercase tracking-widest mb-2 font-medium" data-i18n="quote_of_day">Цитата дня</p>
+          <p class="font-serif text-[15px] text-soft leading-snug italic font-light" id="daily-quote"></p>
+          <p class="text-gold-dim text-xs mt-2 font-light" id="daily-author"></p>
+        </div>
+      </div>
+      <div class="gold-line mt-3"></div>
+      <button onclick="loadNewQuote()" class="mt-3 text-xs text-muted flex items-center gap-1.5 hover:text-gold transition-colors">
+        <i class="fa-solid fa-rotate-right text-xs"></i>
+        <span data-i18n="new_quote">Новая цитата</span>
+      </button>
+    </div>
+
+    <!-- Choose mentor -->
+    <div class="fade-up" style="animation-delay:.05s;">
+      <p class="text-xs text-muted uppercase tracking-widest px-1 mb-3 font-medium" data-i18n="choose_mentor">Выбрать наставника</p>
+      <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" style="scrollbar-width:none;">
+        <div class="mentor-card active glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[82px]" onclick="selectMentor('marcus')" id="mc-marcus">
+          <div class="w-10 h-10 glass-gold rounded-xl flex items-center justify-center">
+            <i class="fa-solid fa-crown" style="color:#C9A84C;font-size:15px;"></i>
+          </div>
+          <p class="text-xs text-center font-medium leading-tight text-soft" id="lbl-marcus">Марк Аврелий</p>
+          <div class="w-1.5 h-1.5 rounded-full bg-gold" id="dot-marcus" style="box-shadow:0 0 6px rgba(201,168,76,.9);"></div>
+        </div>
+        <div class="mentor-card glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[82px]" onclick="selectMentor('epictetus')" id="mc-epictetus">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.7);" id="ico-epictetus">
+            <i class="fa-solid fa-person-walking" style="color:#6B6B9A;font-size:15px;"></i>
+          </div>
+          <p class="text-xs text-center font-medium leading-tight text-muted" id="lbl-epictetus">Эпиктет</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-epictetus"></div>
+        </div>
+        <div class="mentor-card glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[82px]" onclick="selectMentor('seneca')" id="mc-seneca">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.7);" id="ico-seneca">
+            <i class="fa-solid fa-feather" style="color:#6B6B9A;font-size:15px;"></i>
+          </div>
+          <p class="text-xs text-center font-medium leading-tight text-muted" id="lbl-seneca">Сенека</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-seneca"></div>
+        </div>
+        <div class="mentor-card glass rounded-2xl p-3 flex flex-col items-center gap-2 min-w-[82px]" onclick="selectMentor('zeno')" id="mc-zeno">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(37,37,69,.7);" id="ico-zeno">
+            <i class="fa-solid fa-circle-dot" style="color:#6B6B9A;font-size:15px;"></i>
+          </div>
+          <p class="text-xs text-center font-medium leading-tight text-muted" id="lbl-zeno">Зенон</p>
+          <div class="w-1.5 h-1.5 rounded-full border border-muted" id="dot-zeno"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask input -->
+    <div class="glass rounded-2xl p-4 fade-up" style="animation-delay:.1s;">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium flex items-center gap-2">
+        <i class="fa-solid fa-message text-gold text-xs"></i>
+        <span data-i18n="ask_mentor">Спросить наставника</span>
+      </p>
+      <textarea id="user-input" class="stoic-input" rows="3" placeholder=""></textarea>
+      <!-- Quick chips -->
+      <div class="flex gap-2 mt-3 overflow-x-auto pb-1" style="scrollbar-width:none;">
+        <button onclick="setChip(0)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors flex-shrink-0"></button>
+        <button onclick="setChip(1)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors flex-shrink-0"></button>
+        <button onclick="setChip(2)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors flex-shrink-0"></button>
+        <button onclick="setChip(3)" class="chip text-xs glass rounded-xl px-3 py-1.5 text-muted hover:text-soft transition-colors flex-shrink-0"></button>
+      </div>
+      <div class="flex items-end gap-3 mt-3">
+        <div class="flex-1"></div>
+        <button id="send-btn" class="send-btn" onclick="askMentor()">
+          <i class="fa-solid fa-paper-plane" style="color:#080810;font-size:15px;"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Response area -->
+    <div id="response-area" class="hidden glass rounded-2xl p-4">
+      <!-- Skeleton -->
+      <div id="skel" class="hidden space-y-2.5">
+        <div class="skeleton h-3 w-3/4"></div>
+        <div class="skeleton h-3 w-full"></div>
+        <div class="skeleton h-3 w-5/6"></div>
+        <div class="skeleton h-3 w-2/3 mt-1"></div>
+        <div class="skeleton h-3 w-full"></div>
+        <div class="skeleton h-3 w-4/5"></div>
+      </div>
+      <!-- Thinking -->
+      <div id="think" class="hidden flex items-center gap-3 py-1">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-brain text-gold text-xs"></i>
+        </div>
+        <div class="flex gap-1.5 items-center">
+          <div class="w-2 h-2 rounded-full bg-gold pd1"></div>
+          <div class="w-2 h-2 rounded-full bg-gold pd2"></div>
+          <div class="w-2 h-2 rounded-full bg-gold pd3"></div>
+          <span class="text-muted text-sm ml-1 font-light italic" data-i18n="thinking">Наставник размышляет...</span>
+        </div>
+      </div>
+      <!-- Content -->
+      <div id="resp-content" class="hidden">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 glass-gold rounded-xl flex items-center justify-center">
+              <i class="fa-solid fa-scroll text-gold text-xs"></i>
+            </div>
+            <p class="text-xs text-muted uppercase tracking-widest font-medium" data-i18n="mentor_words">Слова наставника</p>
+          </div>
+          <span id="source-badge" class="text-xs px-2.5 py-1 rounded-xl" style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:#C9A84C;font-size:10px;"></span>
+        </div>
+        <div class="gold-line mb-3"></div>
+        <p id="resp-text" class="font-serif text-[16px] text-soft leading-relaxed font-light italic"></p>
+        <div class="mt-4 flex gap-2">
+          <button onclick="saveToHistory()" class="flex-1 glass rounded-xl py-2.5 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+            <i class="fa-regular fa-bookmark text-gold"></i>
+            <span data-i18n="save">Сохранить</span>
+          </button>
+          <button onclick="shareAnswer()" class="flex-1 glass rounded-xl py-2.5 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+            <i class="fa-solid fa-share-nodes text-gold"></i>
+            <span data-i18n="share">Поделиться</span>
+          </button>
+          <button onclick="askFollowUp()" class="flex-1 glass rounded-xl py-2.5 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+            <i class="fa-solid fa-arrow-right text-gold"></i>
+            <span data-i18n="continue_btn">Продолжить</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily practice card -->
+    <div class="glass rounded-2xl p-4 fade-up" style="animation-delay:.15s;">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-sun text-gold text-xs"></i>
+        </div>
+        <p class="text-sm font-medium text-soft" data-i18n="daily_practice">Практика дня</p>
+      </div>
+      <p class="text-xs text-muted font-light leading-relaxed" id="daily-practice-text"></p>
+      <div class="gold-line mt-3 mb-3"></div>
+      <button onclick="loadDailyPractice()" class="text-xs text-muted flex items-center gap-1.5 hover:text-gold transition-colors">
+        <i class="fa-solid fa-rotate-right text-xs"></i>
+        <span data-i18n="new_practice">Новая практика</span>
+      </button>
+    </div>
+
+    <!-- Evening reflection -->
+    <div class="glass rounded-2xl p-4 fade-up" style="animation-delay:.2s;">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-moon text-gold text-xs"></i>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-soft" data-i18n="evening_ref">Вечерняя рефлексия</p>
+          <p class="text-xs text-muted font-light" data-i18n="evening_sub">Вопрос для самоанализа</p>
+        </div>
+      </div>
+      <p class="font-serif text-[14px] text-soft italic font-light leading-snug mb-3" id="reflection-question"></p>
+      <textarea class="reflection-input" rows="2" id="reflection-answer" data-placeholder-ru="Твой ответ..." data-placeholder-en="Your answer..." placeholder="Твой ответ..."></textarea>
+      <button onclick="saveReflection()" class="mt-2 w-full glass rounded-xl py-2 text-xs text-muted flex items-center justify-center gap-1.5 hover:text-soft transition-colors">
+        <i class="fa-solid fa-check text-gold"></i>
+        <span data-i18n="save_reflection">Сохранить ответ</span>
+      </button>
+    </div>
+
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB: VIRTUE TRACKER
+═══════════════════════════════════════════ -->
+<div id="tab-virtues" class="tab">
+  <div class="pt-safe px-5 pt-5 pb-3 flex-shrink-0">
+    <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="virtues_sub">Практика стоицизма</p>
+    <h1 class="font-serif text-2xl gold-text font-light" data-i18n="virtues_title">Трекер добродетелей</h1>
+  </div>
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+
+    <!-- Streak -->
+    <div class="glass rounded-2xl p-4 text-center">
+      <div class="flex items-center justify-center gap-4">
+        <div>
+          <p class="text-3xl font-serif gold-text font-light" id="streak-count">0</p>
+          <p class="text-xs text-muted mt-0.5" data-i18n="days_streak">дней подряд</p>
+        </div>
+        <div class="w-px h-10 bg-border"></div>
+        <div>
+          <p class="text-3xl font-serif gold-text font-light" id="total-practices">0</p>
+          <p class="text-xs text-muted mt-0.5" data-i18n="total_practices">всего практик</p>
+        </div>
+        <div class="w-px h-10 bg-border"></div>
+        <div>
+          <p class="text-3xl font-serif gold-text font-light" id="virtue-score">0</p>
+          <p class="text-xs text-muted mt-0.5" data-i18n="virtue_points">очков</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Virtues -->
+    <div class="space-y-3" id="virtue-list"></div>
+
+    <!-- Weekly calendar -->
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium" data-i18n="this_week">Эта неделя</p>
+      <div class="flex justify-between gap-1" id="week-calendar"></div>
+    </div>
+
+    <!-- Today's checklist -->
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium" data-i18n="today_tasks">Задачи на сегодня</p>
+      <div class="space-y-2.5" id="daily-tasks"></div>
+      <button onclick="completeDayTasks()" class="mt-4 w-full btn-gold py-2.5 rounded-xl text-sm">
+        <i class="fa-solid fa-check mr-2"></i>
+        <span data-i18n="mark_done">Отметить выполненным</span>
+      </button>
+    </div>
+
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB: HISTORY
+═══════════════════════════════════════════ -->
+<div id="tab-history" class="tab">
+  <div class="pt-safe px-5 pt-5 pb-3 flex-shrink-0">
+    <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="archive">Архив</p>
+    <h1 class="font-serif text-2xl gold-text font-light" data-i18n="history_title">История</h1>
+  </div>
+  <!-- Filter tabs -->
+  <div class="px-5 flex gap-2 mb-4 flex-shrink-0">
+    <button class="filter-btn active text-xs px-4 py-1.5 rounded-xl font-medium transition-all" onclick="filterHistory('all',this)" data-i18n="filter_all">Всё</button>
+    <button class="filter-btn text-xs px-4 py-1.5 rounded-xl font-medium transition-all glass text-muted" onclick="filterHistory('chat',this)" data-i18n="filter_chat">Беседы</button>
+    <button class="filter-btn text-xs px-4 py-1.5 rounded-xl font-medium transition-all glass text-muted" onclick="filterHistory('reflection',this)" data-i18n="filter_ref">Рефлексии</button>
+  </div>
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-3" id="history-list">
+    <div id="hist-empty" class="flex flex-col items-center justify-center h-48 text-center">
+      <div class="w-14 h-14 glass rounded-2xl flex items-center justify-center mb-3">
+        <i class="fa-regular fa-scroll text-muted text-xl"></i>
+      </div>
+      <p class="text-soft text-sm font-medium mb-1" data-i18n="hist_empty_title">Архив пуст</p>
+      <p class="text-muted text-xs font-light" data-i18n="hist_empty_sub">Сохранённые беседы появятся здесь</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB: SETTINGS
+═══════════════════════════════════════════ -->
+<div id="tab-settings" class="tab">
+  <div class="pt-safe px-5 pt-5 pb-3 flex-shrink-0">
+    <p class="text-muted text-xs font-light tracking-widest uppercase" data-i18n="settings_sub">Персонализация</p>
+    <h1 class="font-serif text-2xl gold-text font-light" data-i18n="settings_title">Настройки</h1>
+  </div>
+  <div class="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+
+    <!-- Profile -->
+    <div class="glass rounded-2xl p-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 glass-gold rounded-xl flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-person-praying text-gold text-lg"></i>
+        </div>
+        <div class="flex-1">
+          <p class="text-soft font-medium text-sm" data-i18n="student">Ученик Стои</p>
+          <p class="text-muted text-xs font-light">AI Stoic Mentor · v1.0.0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Language -->
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium" data-i18n="language">Язык / Language</p>
+      <div class="flex gap-3">
+        <button onclick="setLang('ru')" id="lang-btn-ru"
+          class="flex-1 py-2.5 rounded-xl text-sm font-medium glass transition-all"
+          style="border:1px solid rgba(201,168,76,.3);color:#C9A84C;">🇷🇺 Русский</button>
+        <button onclick="setLang('en')" id="lang-btn-en"
+          class="flex-1 py-2.5 rounded-xl text-sm font-medium glass transition-all"
+          style="color:#6B6B9A;">🇬🇧 English</button>
+      </div>
+    </div>
+
+    <!-- Active mentor -->
+    <div class="glass rounded-2xl p-4">
+      <p class="text-xs text-muted uppercase tracking-widest mb-3 font-medium" data-i18n="active_mentor">Активный наставник</p>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center">
+          <i class="fa-solid fa-crown text-gold text-xs"></i>
+        </div>
+        <p class="text-soft text-sm font-medium" id="active-mentor-label">Марк Аврелий</p>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="glass rounded-2xl overflow-hidden">
+      <p class="text-xs text-muted uppercase tracking-widest px-4 pt-4 pb-2 font-medium" data-i18n="notifications">Уведомления</p>
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3 flex-1">
+          <i class="fa-solid fa-sun text-gold w-4 text-sm flex-shrink-0"></i>
+          <p class="text-sm text-soft" data-i18n="morning_notif">Утренняя цитата</p>
+        </div>
+        <div class="toggle-track on" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="gold-line mx-4"></div>
+      <div class="px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3 flex-1">
+          <i class="fa-solid fa-moon text-gold w-4 text-sm flex-shrink-0"></i>
+          <p class="text-sm text-soft" data-i18n="evening_notif">Вечерняя рефлексия</p>
+        </div>
+        <div class="toggle-track" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="glass rounded-2xl p-4 space-y-3">
+      <p class="text-xs text-muted uppercase tracking-widest font-medium" data-i18n="data">Данные</p>
+      <button onclick="clearHistory()" class="w-full glass rounded-xl py-2.5 text-sm text-muted hover:text-soft transition-colors border border-border">
+        <i class="fa-solid fa-trash mr-2 text-xs"></i>
+        <span data-i18n="clear_history">Очистить историю</span>
+      </button>
+      <button onclick="resetVirtues()" class="w-full glass rounded-xl py-2.5 text-sm text-muted hover:text-soft transition-colors border border-border">
+        <i class="fa-solid fa-arrow-rotate-left mr-2 text-xs"></i>
+        <span data-i18n="reset_virtues">Сбросить трекер</span>
+      </button>
+    </div>
+
+    <!-- About -->
+    <div class="glass rounded-2xl p-4 text-center">
+      <img src="icon-192.png" alt="logo" class="w-12 h-12 rounded-xl object-cover mx-auto mb-2" onerror="this.style.display='none'" />
+      <p class="font-serif text-lg gold-text font-light">AI Stoic Mentor</p>
+      <p class="text-muted text-xs font-light mt-0.5">v1.0.0 · Philosophy & Mindfulness</p>
+      <p class="text-muted text-xs mt-2 font-serif italic font-light">«Memento mori. Amor fati.»</p>
+    </div>
+
+    <div class="h-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB: PSYCHOLOGIST
+═══════════════════════════════════════════ -->
+<div id="tab-psycho" class="tab">
+  <!-- Header -->
+  <div class="pt-safe px-5 pt-4 pb-3 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,rgba(100,160,255,.15),rgba(80,120,220,.08));border:1px solid rgba(100,160,255,.2);">
+          <i class="fa-solid fa-brain" style="color:#7BAEFF;font-size:16px;"></i>
+        </div>
+        <div>
+          <p class="text-xs font-light tracking-widest uppercase" style="color:#7BAEFF;" data-i18n="psych_sub">AI Психолог</p>
+          <h1 class="font-serif text-xl font-light leading-tight" style="background:linear-gradient(135deg,#9CC5FF,#7BAEFF,#5B8FCC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" data-i18n="psych_title">Dr. Sophia</h1>
+        </div>
+      </div>
+      <button onclick="clearPsychoChat()" class="glass rounded-xl px-3 py-1.5 text-xs text-muted hover:text-soft transition-colors" data-i18n="psych_clear">Очистить</button>
+    </div>
+    <!-- Status bar -->
+    <div class="flex items-center gap-2 mt-2 px-1">
+      <div class="w-2 h-2 rounded-full" style="background:#4CAF50;box-shadow:0 0 6px rgba(76,175,80,.6);"></div>
+      <p class="text-xs font-light" style="color:#6B6B9A;" data-i18n="psych_online">Онлайн · готова выслушать</p>
+    </div>
+  </div>
+
+  <!-- Chat messages -->
+  <div class="flex-1 overflow-y-auto px-4 pb-2 space-y-3" id="psych-messages">
+    <!-- Welcome message injected by JS -->
+  </div>
+
+  <!-- Typing indicator -->
+  <div id="psych-typing" class="hidden px-4 pb-2">
+    <div class="flex items-end gap-2">
+      <div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,rgba(100,160,255,.15),rgba(80,120,220,.08));border:1px solid rgba(100,160,255,.2);">
+        <i class="fa-solid fa-brain" style="color:#7BAEFF;font-size:11px;"></i>
+      </div>
+      <div class="px-4 py-3 rounded-2xl rounded-bl-md" style="background:rgba(17,17,40,.9);border:1px solid rgba(255,255,255,.07);">
+        <div class="flex gap-1.5 items-center">
+          <div class="w-1.5 h-1.5 rounded-full pd1" style="background:#7BAEFF;"></div>
+          <div class="w-1.5 h-1.5 rounded-full pd2" style="background:#7BAEFF;"></div>
+          <div class="w-1.5 h-1.5 rounded-full pd3" style="background:#7BAEFF;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick topics -->
+  <div class="px-4 pb-2 flex gap-2 overflow-x-auto flex-shrink-0" style="scrollbar-width:none;" id="psych-topics">
+    <button onclick="setPsychoChip(0)" class="psych-chip text-xs rounded-xl px-3 py-1.5 flex-shrink-0 transition-colors" style="background:rgba(100,160,255,.08);border:1px solid rgba(100,160,255,.15);color:#7BAEFF;"></button>
+    <button onclick="setPsychoChip(1)" class="psych-chip text-xs rounded-xl px-3 py-1.5 flex-shrink-0 transition-colors" style="background:rgba(100,160,255,.08);border:1px solid rgba(100,160,255,.15);color:#7BAEFF;"></button>
+    <button onclick="setPsychoChip(2)" class="psych-chip text-xs rounded-xl px-3 py-1.5 flex-shrink-0 transition-colors" style="background:rgba(100,160,255,.08);border:1px solid rgba(100,160,255,.15);color:#7BAEFF;"></button>
+    <button onclick="setPsychoChip(3)" class="psych-chip text-xs rounded-xl px-3 py-1.5 flex-shrink-0 transition-colors" style="background:rgba(100,160,255,.08);border:1px solid rgba(100,160,255,.15);color:#7BAEFF;"></button>
+  </div>
+
+  <!-- Input -->
+  <div class="px-4 pb-3 flex-shrink-0">
+    <div class="flex items-end gap-2">
+      <textarea id="psych-input" class="stoic-input flex-1 text-sm" rows="1" style="min-height:44px;max-height:120px;padding:12px 14px;border-color:rgba(100,160,255,.15);"
+        data-placeholder-ru="Расскажи, что тебя беспокоит..."
+        data-placeholder-en="Tell me what's on your mind..."
+        placeholder="Расскажи, что тебя беспокоит..."></textarea>
+      <button id="psych-send-btn" onclick="sendPsychoMessage()" class="flex-shrink-0 rounded-2xl flex items-center justify-center transition-all active:scale-95" style="width:44px;height:44px;background:linear-gradient(135deg,#7BAEFF,#5B8FCC);border:none;cursor:pointer;">
+        <i class="fa-solid fa-paper-plane" style="color:#fff;font-size:14px;"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     BOTTOM NAV
+═══════════════════════════════════════════ -->
+<nav class="bottom-nav safe-bottom flex-shrink-0">
+  <div class="flex items-center justify-around px-1 pt-2 pb-1">
+    <button class="nav-item active flex flex-col items-center gap-0.5 py-1 px-2" onclick="switchTab('home',this)">
+      <i class="nav-icon fa-solid fa-compass text-lg"></i>
+      <span class="nav-label" data-i18n="nav_home">Главная</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-0.5 py-1 px-2" onclick="switchTab('virtues',this)">
+      <i class="nav-icon fa-solid fa-shield-halved text-lg"></i>
+      <span class="nav-label" data-i18n="nav_virtues">Добродетели</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-0.5 py-1 px-2" onclick="switchTab('psycho',this)">
+      <i class="nav-icon fa-solid fa-brain text-lg"></i>
+      <span class="nav-label" data-i18n="nav_psycho">Психолог</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-0.5 py-1 px-2" onclick="switchTab('history',this)">
+      <i class="nav-icon fa-regular fa-scroll text-lg"></i>
+      <span class="nav-label" data-i18n="nav_history">История</span>
+    </button>
+    <button class="nav-item flex flex-col items-center gap-0.5 py-1 px-2" onclick="switchTab('settings',this)">
+      <i class="nav-icon fa-solid fa-gear text-lg"></i>
+      <span class="nav-label" data-i18n="nav_settings">Настройки</span>
+    </button>
+  </div>
+</nav>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 hidden glass-gold rounded-2xl px-4 py-2.5" style="box-shadow:0 0 30px rgba(201,168,76,.2);max-width:88vw;white-space:nowrap;">
+  <p id="toast-text" class="text-sm text-soft flex items-center gap-2">
+    <i id="toast-icon" class="fa-solid fa-check text-gold"></i><span></span>
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+// ──────────────────────────────────────────────────────
+// CONFIG
+// ──────────────────────────────────────────────────────
+// ← Замени ключ здесь если нужно
+const GEMINI_KEY = 'AIzaSyDFfmC_vbBq4uFg3WA3ytD76vTdNM0h-uM';
+// Наставник использует flash, психолог — pro для умных ответов
+const GEMINI_URL      = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+const GEMINI_URL_PRO  = () => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+
+// ──────────────────────────────────────────────────────
+// i18n
+// ──────────────────────────────────────────────────────
+const T = {
+  ru:{
+    subtitle:'AI Наставник', quote_of_day:'Цитата дня', new_quote:'Новая цитата',
+    choose_mentor:'Выбрать наставника', ask_mentor:'Спросить наставника',
+    thinking:'Наставник размышляет...', mentor_words:'Слова наставника',
+    save:'Сохранить', share:'Поделиться', continue_btn:'Продолжить',
+    daily_practice:'Практика дня', new_practice:'Другая практика',
+    evening_ref:'Вечерняя рефлексия', evening_sub:'Вопрос для самоанализа',
+    save_reflection:'Сохранить ответ',
+    virtues_sub:'Практика стоицизма', virtues_title:'Трекер добродетелей',
+    days_streak:'дней подряд', total_practices:'всего практик', virtue_points:'очков',
+    this_week:'Эта неделя', today_tasks:'Задачи на сегодня', mark_done:'Отметить выполненным',
+    archive:'Архив', history_title:'История',
+    filter_all:'Всё', filter_chat:'Беседы', filter_ref:'Рефлексии',
+    hist_empty_title:'Архив пуст', hist_empty_sub:'Сохранённые беседы появятся здесь',
+    settings_sub:'Персонализация', settings_title:'Настройки', language:'Язык / Language',
+    student:'Ученик Стои', free_forever:'Бесплатно навсегда 🎉',
+    active_mentor:'Активный наставник', notifications:'Уведомления',
+    morning_notif:'Утренняя цитата', evening_notif:'Вечерняя рефлексия',
+    api_key:'Gemini API Key', api_hint:'Получи бесплатно на aistudio.google.com',
+    save_key:'Сохранить', data:'Данные', clear_history:'Очистить историю',
+    reset_virtues:'Сбросить трекер',
+    nav_home:'Главная', nav_virtues:'Добродетели', nav_psycho:'Психолог', nav_history:'История', nav_settings:'Настройки',
+    toast_saved:'Сохранено', toast_cleared:'Очищено', toast_mentor:'Наставник: ',
+    toast_api_saved:'API ключ сохранён', toast_ref_saved:'Рефлексия сохранена',
+    toast_shared:'Скопировано в буфер', toast_done:'День отмечен!',
+    psych_sub:'AI Психолог', psych_title:'Dr. Sophia', psych_online:'Онлайн · готова выслушать',
+    psych_clear:'Очистить', psych_placeholder:'Расскажи, что тебя беспокоит...',
+    psych_welcome:'Привет. Я доктор Sophia — твой личный психолог. Здесь ты можешь говорить о чём угодно: о тревогах, отношениях, внутренних конфликтах или просто о том, что накипело. Я слушаю внимательно и без осуждения. С чего хотел бы начать?',
+    psych_chips:['тревога','депрессия','отношения','стресс на работе'],
+    psych_chip_prompts:['Я испытываю сильную тревогу и не знаю как с этим справиться','Я чувствую себя опустошённым и без мотивации уже долгое время','У меня проблемы в отношениях и я не знаю как их решить','Я очень устал от работы и чувствую выгорание'],
+    psych_you:'Вы',
+    placeholder:'Что тебя беспокоит? Какое решение ты ищешь?...',
+    chips:['тревога','принятие','цель','гнев'],
+    chip_prompts:[
+      'Как справиться с тревогой и страхом?',
+      'Как принять то, что невозможно изменить?',
+      'Как найти цель и смысл в жизни?',
+      'Как совладать с гневом и раздражением?'
+    ],
+    mentor_names:{marcus:'Марк Аврелий',epictetus:'Эпиктет',seneca:'Сенека',zeno:'Зенон'},
+    follow:'Расскажи подробнее и дай практическое упражнение на сегодня',
+    virtue_names:['Мудрость','Справедливость','Стойкость','Умеренность'],
+    virtue_descs:['Sophia — ясность ума','Dikaiosyne — честность','Andreia — смелость','Sophrosyne — самоконтроль'],
+    tasks:['Прочти одну стоическую цитату','Запиши три вещи, за которые благодарен','Прими холодный душ (дискомфорт стоика)','Сделай что-то для другого человека'],
+    practices:[
+      'Утром спроси себя: «Что я могу сделать хорошего сегодня?». Вечером: «Что я сделал хорошего?»',
+      'Воображаемая потеря: представь, что потерял что-то ценное. Почувствуй благодарность за то, что оно у тебя ещё есть.',
+      'Negative visualization: 10 минут думай о том, что могло бы пойти не так. Радуйся, что не пошло.',
+      'Сделай одно неудобное дело, которое давно откладывал. Дискомфорт — учитель.',
+      'Прочти раздел из «Размышлений» Марка Аврелия. Запиши, что задело.',
+    ],
+    reflections:[
+      'Что сегодня было в моей власти, а что — нет?',
+      'Действовал ли я сегодня согласно своим ценностям?',
+      'Чему меня научил сегодняшний день?',
+      'Что я мог сделать лучше?',
+      'За что я благодарен сегодня?',
+      'Что отнимало у меня энергию без пользы?',
+    ],
+  },
+  en:{
+    subtitle:'AI Guide', quote_of_day:'Quote of the Day', new_quote:'New Quote',
+    choose_mentor:'Choose Mentor', ask_mentor:'Ask the Mentor',
+    thinking:'The mentor is contemplating...', mentor_words:'Words of the Mentor',
+    save:'Save', share:'Share', continue_btn:'Continue',
+    daily_practice:'Practice of the Day', new_practice:'New Practice',
+    evening_ref:'Evening Reflection', evening_sub:'Question for self-analysis',
+    save_reflection:'Save Answer',
+    virtues_sub:'Stoic Practice', virtues_title:'Virtue Tracker',
+    days_streak:'day streak', total_practices:'total practices', virtue_points:'points',
+    this_week:'This Week', today_tasks:"Today's Tasks", mark_done:'Mark as Done',
+    archive:'Archive', history_title:'History',
+    filter_all:'All', filter_chat:'Chats', filter_ref:'Reflections',
+    hist_empty_title:'Archive is empty', hist_empty_sub:'Saved conversations will appear here',
+    settings_sub:'Personalization', settings_title:'Settings', language:'Язык / Language',
+    student:'Student of the Stoa', free_forever:'Free forever 🎉',
+    active_mentor:'Active Mentor', notifications:'Notifications',
+    morning_notif:'Morning quote', evening_notif:'Evening reflection',
+    api_key:'Gemini API Key', api_hint:'Get it free at aistudio.google.com',
+    save_key:'Save', data:'Data', clear_history:'Clear History',
+    reset_virtues:'Reset Tracker',
+    nav_home:'Home', nav_virtues:'Virtues', nav_psycho:'Therapist', nav_history:'History', nav_settings:'Settings',
+    toast_saved:'Saved', toast_cleared:'Cleared', toast_mentor:'Mentor: ',
+    toast_api_saved:'API key saved', toast_ref_saved:'Reflection saved',
+    toast_shared:'Copied to clipboard', toast_done:'Day marked!',
+    notice_demo:'',
+    psych_sub:'AI Therapist', psych_title:'Dr. Sophia', psych_online:'Online · ready to listen',
+    psych_clear:'Clear', psych_placeholder:'Tell me what\'s on your mind...',
+    psych_welcome:'Hello. I\'m Dr. Sophia — your personal AI therapist. This is a safe space to talk about anything: anxiety, relationships, inner conflicts, or whatever is weighing on you. I listen carefully and without judgment. Where would you like to begin?',
+    psych_chips:['anxiety','depression','relationships','work stress'],
+    psych_chip_prompts:['I\'m experiencing strong anxiety and don\'t know how to cope','I feel empty and unmotivated for a long time now','I have problems in my relationship and don\'t know how to resolve them','I\'m burned out from work and completely exhausted'],
+    psych_you:'You',
+    placeholder:'What troubles you? What guidance do you seek?...',
+    chips:['anxiety','acceptance','purpose','anger'],
+    chip_prompts:[
+      'How do I deal with anxiety and fear?',
+      'How do I accept what I cannot change?',
+      'How do I find purpose and meaning in life?',
+      'How do I manage anger and irritation?'
+    ],
+    mentor_names:{marcus:'Marcus Aurelius',epictetus:'Epictetus',seneca:'Seneca',zeno:'Zeno'},
+    follow:'Please elaborate and give me a practical exercise for today',
+    virtue_names:['Wisdom','Justice','Courage','Temperance'],
+    virtue_descs:['Sophia — clarity of mind','Dikaiosyne — fairness','Andreia — bravery','Sophrosyne — self-control'],
+    tasks:['Read one Stoic quote','Write three things you are grateful for','Take a cold shower (Stoic discomfort)','Do something kind for another person'],
+    practices:[
+      'Morning: ask "What good can I do today?" Evening: ask "What good did I do?"',
+      'Negative visualization: imagine you have lost something precious. Feel gratitude that you still have it.',
+      'Practice voluntary discomfort: skip a comfort for one hour. Observe what remains.',
+      'Do one uncomfortable task you have been avoiding. Discomfort is the teacher.',
+      'Read a passage from Marcus Aurelius Meditations. Write down what struck you.',
+    ],
+    reflections:[
+      'What was in my control today, and what was not?',
+      'Did I act in accordance with my values today?',
+      'What did today teach me?',
+      'What could I have done better?',
+      'What am I grateful for today?',
+      'What drained my energy without benefit?',
+    ],
+  }
+};
+
+// ──────────────────────────────────────────────────────
+// TOPIC-AWARE DEMO RESPONSES
+// Каждая тема = ключевые слова + ответы 4 наставников
+// ──────────────────────────────────────────────────────
+
+// Тематические ответы по наставникам и языкам
+const TOPIC_RESPONSES = {
+  // ── ГНЕВ / ANGER ──
+  anger: {
+    keywords: { ru:['гнев','злость','раздражени','бешенств','ярость','злюсь','злой','взбесил','вспыльчив','агресс','обидел','обидно','оскорбил','ненавижу','ненависть'], en:['anger','rage','fury','irritat','mad','angry','furious','temper','wrath','hate','hatred','resent','offend','annoyed'] },
+    marcus: {
+      ru:'Гнев — это кратковременное безумие, и первый шаг мудреца — осознать это прежде, чем он причинит вред. Спроси себя: изменит ли моя злость то, что произошло? Нет. Тогда к чему она? Всё, что ты не контролируешь, ты должен принять; всё, что контролируешь — исправить спокойно. Береги своё внутреннее спокойствие — это твоя истинная крепость, и никто не может войти в неё без твоего разрешения.',
+      en:'Anger is temporary madness — the wise man notices this before he causes harm. Ask yourself: will my rage change what has happened? No. Then what purpose does it serve? Whatever you cannot control, accept; whatever you can — correct it calmly. Protect your inner peace: it is your true fortress, and no one enters it without your permission.'
+    },
+    epictetus: {
+      ru:'Тебя ранит не то, что сделал другой человек, — тебя ранит твоё суждение об этом. Измени суждение — и рана затянется. Тот, кто причинил тебе обиду, действовал из своего невежества — стоит ли невежество твоей ярости? Сохрани себя для лучшего применения своей энергии.',
+      en:'You are not hurt by what the other person did — you are hurt by your judgment of it. Change your judgment, and the wound heals. The one who wronged you acted from ignorance — is ignorance worth your fury? Reserve yourself for better use of your energy.'
+    },
+    seneca: {
+      ru:'Самое лучшее лекарство от гнева — промедление. Прежде чем ответить — сделай десять вдохов. Гнев — единственный порок, который убивает того, кто его испытывает, прежде чем достигнет цели. Ты хочешь наказать обидчика — но первую жертву гнев уже выбрал: это ты сам.',
+      en:'The best remedy for anger is delay. Before you respond — take ten breaths. Anger is the one vice that destroys its owner before it reaches its target. You wish to punish the wrongdoer — but anger has already chosen its first victim: you yourself.'
+    },
+    zeno: {
+      ru:'Гнев — признак того, что ты придал чему-то внешнему власть над своим разумом. Верни эту власть себе. Живи согласно природе разума: разум спокоен, ясен и справедлив. Там, где гнев — там уже нет философии.',
+      en:'Anger is a sign that you have given something external power over your reason. Take that power back. Live according to the nature of reason: reason is calm, clear, and just. Where anger rules, philosophy has already departed.'
+    }
+  },
+
+  // ── ТРЕВОГА / ANXIETY ──
+  anxiety: {
+    keywords: { ru:['тревог','страх','боюсь','беспокою','волнуюсь','паник','переживаю','нервничаю','беспокойств','стресс','напряж','пугает','ужас','беспокоит','страшно'], en:['anxiety','anxious','worry','fear','afraid','panic','stress','nervous','tense','scared','terrif','dread','uneasy','phobia','overwhelm'] },
+    marcus: {
+      ru:'Тревога рождается тогда, когда ты живёшь в будущем, которого ещё нет. Вернись в настоящее — здесь и сейчас ты в безопасности. Спроси себя: что именно происходит прямо сейчас, в эту секунду? Скорее всего — ничего страшного. Большинство того, чего мы боимся, так и не случается; а то, что случается, — переживается.',
+      en:'Anxiety is born when you live in a future that does not yet exist. Return to the present — here and now you are safe. Ask yourself: what is actually happening right now, this second? Most likely — nothing terrible. Most of what we fear never comes; and what does come, we survive.'
+    },
+    epictetus: {
+      ru:'Разбери свой страх на части. Что именно пугает? Это в твоей власти или нет? Если в твоей — действуй. Если нет — принятие есть единственный разумный ответ. Страдать от того, что вне нашей власти, — значит добровольно удваивать несчастье.',
+      en:'Dissect your fear into pieces. What exactly frightens you? Is it within your power or not? If it is — act. If not — acceptance is the only rational response. To suffer over what is beyond our power is to voluntarily double the misfortune.'
+    },
+    seneca: {
+      ru:'Omnia aliena sunt — всё внешнее чужое, и страх перед потерей чужого — пустая трата твоего единственного богатства: времени. Представь наихудшее, что может случиться. Теперь спроси: смогу ли я это пережить? Почти всегда — да. Этот ответ освобождает.',
+      en:'Omnia aliena sunt — all external things are borrowed, and fear of losing them is a waste of your only true wealth: time. Imagine the worst that could happen. Now ask: could I survive it? Almost always — yes. That answer sets you free.'
+    },
+    zeno: {
+      ru:'Тревога — это когда разум потерял согласие с природой вещей. Природа не знает тревоги: река течёт, солнце встаёт, звёзды движутся — без беспокойства. Верни свой разум к его природе — к ясности, к настоящему, к тому, что есть.',
+      en:'Anxiety is the mind losing agreement with the nature of things. Nature knows no anxiety: the river flows, the sun rises, stars move — without worry. Return your mind to its nature: clarity, the present moment, what actually is.'
+    }
+  },
+
+  // ── ЦЕЛЬ / PURPOSE ──
+  purpose: {
+    keywords: { ru:['цел','смысл','зачем','предназначен','призвани','мотивац','нет смысла','не знаю чего хочу','не понимаю зачем','потерял себя','кто я','что делать с жизнью'], en:['purpose','meaning','goal','why','motivation','direction','lost','don\'t know what i want','who am i','what to do with life','calling','mission'] },
+    marcus: {
+      ru:'Твоя цель — быть полезным. Не богатым, не знаменитым, не бессмертным — полезным: своей семье, своему городу, своему времени. Я был императором Рима и всё равно каждое утро спрашивал себя: что я могу сделать хорошего сегодня? Это и есть достаточная цель для любого человека.',
+      en:'Your purpose is to be useful. Not rich, not famous, not immortal — useful: to your family, your community, your time. I was Emperor of Rome and still asked myself every morning: what good can I do today? That is sufficient purpose for any person.'
+    },
+    epictetus: {
+      ru:'Цель не ищут — её выбирают. Спроси себя: каким человеком я хочу быть? Мудрым? Справедливым? Стойким? Начни быть этим человеком прямо сейчас — и смысл появится сам, как тень следует за телом.',
+      en:'Purpose is not found — it is chosen. Ask yourself: what kind of person do I wish to be? Wise? Just? Courageous? Begin being that person right now — and meaning will appear by itself, as shadow follows body.'
+    },
+    seneca: {
+      ru:'Тот, кто везде — нигде. Выбери одно направление и иди. Жизнь коротка не потому, что её мало, — а потому, что мы тратим её на что попало. Реши, чему ты служишь, — и каждый день наполнится смыслом автоматически.',
+      en:'One who is everywhere is nowhere. Choose one direction and walk it. Life is short not because there is little of it — but because we spend it on anything and everything. Decide what you serve — and every day fills with meaning automatically.'
+    },
+    zeno: {
+      ru:'Жить согласно природе разума — вот высшая цель. Природа разума — добродетель. Добродетель — это и есть счастье. Не ищи цель снаружи: посмотри внутрь, на то, что делает тебя по-настоящему человеком.',
+      en:'To live in accordance with the nature of reason — that is the highest purpose. The nature of reason is virtue. Virtue is happiness itself. Do not seek purpose outside: look inward, at what makes you genuinely human.'
+    }
+  },
+
+  // ── ПРИНЯТИЕ / ACCEPTANCE ──
+  acceptance: {
+    keywords: { ru:['принять','смириться','не могу принять','почему я','несправедливо','не изменить','судьба','потеря','потерял','умер','развод','расстались','прошлое','сожалею','жалею'], en:['accept','acceptance','cannot change','unfair','loss','lost','grief','death','divorce','breakup','past','regret','why me','fate','destiny'] },
+    marcus: {
+      ru:'Amor fati — люби свою судьбу. Не терпи её, не переносись — именно люби. Всё, что с тобой случилось, сделало тебя тем, кто ты есть. Спроси не «почему это случилось со мной?», а «как я могу использовать это для своего роста?». Первый вопрос делает тебя жертвой. Второй — философом.',
+      en:'Amor fati — love your fate. Not merely endure it, not tolerate it — love it. Everything that happened to you made you who you are. Ask not "why did this happen to me?" but "how can I use this for my growth?" The first question makes you a victim. The second makes you a philosopher.'
+    },
+    epictetus: {
+      ru:'Есть то, что в нашей власти, и то, что не в нашей власти. Это разграничение — основа всей философии. Прошлое не в твоей власти — ни секунды. Твоя реакция на прошлое — полностью в твоей власти. Сосредоточься на втором, и первое перестанет причинять боль.',
+      en:'There is what is in our power, and what is not in our power. This distinction is the foundation of all philosophy. The past is not in your power — not a single second of it. Your response to the past — entirely within your power. Focus on the second, and the first will cease to cause pain.'
+    },
+    seneca: {
+      ru:'Ничто не случается с мудрецом против его воли — потому что он заранее принял мысль о том, что всё может случиться. Скорбь законна, но временна: позволь ей пройти сквозь тебя, не задерживая. Река не останавливается, встречая камень, — она огибает его.',
+      en:'Nothing happens to the wise man against his will — because he has already accepted the thought that everything can happen. Grief is legitimate but temporary: allow it to pass through you without clinging. The river does not stop when it meets a stone — it flows around it.'
+    },
+    zeno: {
+      ru:'Всё происходящее — часть единого разумного порядка мира. Сопротивляться ему — значит сопротивляться самой природе. Прими произошедшее как необходимую часть целого, которое больше тебя, — и обретёшь мир в душе.',
+      en:'Everything that happens is part of a single rational order of the world. To resist it is to resist nature itself. Accept what has happened as a necessary part of a whole that is greater than you — and you will find peace in your soul.'
+    }
+  },
+
+  // ── ОТНОШЕНИЯ / RELATIONSHIPS ──
+  relationships: {
+    keywords: { ru:['отношени','партнёр','любимый','любимая','жена','муж','друг','дружба','предал','изменил','ревность','одинок','одиночество','люблю','разлюбил','расстались','поссорились','конфликт','семья','родители','дети'], en:['relationship','partner','love','wife','husband','friend','friendship','betrayal','cheating','jealous','lonely','loneliness','breakup','fight','conflict','family','parents','children','miss','miss you'] },
+    marcus: {
+      ru:'Люди созданы друг для друга — это их природа. Когда отношения причиняют боль, спроси: что я могу сделать иначе? Не «кто виноват?», а «что в моей власти?». Обижаться на людей — всё равно что обижаться на камень за то, что он твёрдый. Пойми природу человека — и примири себя с ней.',
+      en:'People are made for one another — that is their nature. When relationships cause pain, ask: what can I do differently? Not "who is to blame?" but "what is within my power?" To resent people is like resenting a stone for being hard. Understand human nature — and make your peace with it.'
+    },
+    epictetus: {
+      ru:'Ты не можешь контролировать чужие чувства, слова или поступки — только свои. Это не холодность, это свобода. Люби — но не привязывайся к результату любви. Дружи — но не требуй от друга быть иным. Тогда любые отношения станут даром, а не тюрьмой.',
+      en:'You cannot control another\'s feelings, words, or actions — only your own. This is not coldness; it is freedom. Love — but do not attach yourself to love\'s outcome. Befriend — but do not demand that your friend be other than they are. Then any relationship becomes a gift, not a prison.'
+    },
+    seneca: {
+      ru:'Дружба приобретается медленно, а теряется быстро — береги её как редкий сосуд. Но помни: ты не можешь потерять того, кого по-настоящему любишь, — потому что истинная любовь живёт внутри тебя, а не снаружи. Одиночество — не отсутствие людей рядом, а отсутствие себя самого.',
+      en:'Friendship is gained slowly and lost quickly — guard it like a rare vessel. But remember: you cannot lose one you truly love — because true love lives within you, not outside. Loneliness is not the absence of people nearby, but the absence of your own self.'
+    },
+    zeno: {
+      ru:'Мудрец любит — но не зависит. Он открыт — но не беззащитен. Поступай с другим так, как хочешь, чтобы поступали с тобой, — не потому что этого требует закон, а потому что это требует твоя природа как разумного существа.',
+      en:'The wise man loves — but does not depend. He is open — but not defenseless. Treat another as you wish to be treated — not because law demands it, but because your nature as a rational being demands it.'
+    }
+  },
+
+  // ── РАБОТА / ДЕНЬГИ / WORK ──
+  work: {
+    keywords: { ru:['работа','деньги','карьера','уволили','уволен','начальник','бизнес','успех','провал','неудача','не получается','не выходит','устал','выгорание','долг','нет денег','финансов'], en:['work','job','money','career','fired','boss','business','success','failure','burnout','tired','exhausted','debt','finance','income','salary','broke'] },
+    marcus: {
+      ru:'Делай своё дело так хорошо, как только можешь — это всё, что в твоей власти. Результат? Он зависит от тысячи вещей, которые тебе неподвластны. Неудача — не конец, а данные. Возьми из этого опыта урок и продолжай. Природа не стыдится того, что дерево упало: она выращивает новый.',
+      en:'Do your work as well as you possibly can — that is all within your power. The outcome? It depends on a thousand things beyond your control. Failure is not the end — it is data. Extract the lesson and continue. Nature is not ashamed when a tree falls: it grows a new one.'
+    },
+    epictetus: {
+      ru:'Не смешивай то, что в твоей власти, с тем, что нет. Твой труд, твоё усилие, твоя честность — в твоей власти. Оценка других, удача, внешние обстоятельства — нет. Работай над первым со всей силой, и отпусти второе без сожаления.',
+      en:'Do not confuse what is in your power with what is not. Your effort, your work, your integrity — in your power. Others\' opinions, luck, external circumstances — not. Work on the first with all your strength, and release the second without regret.'
+    },
+    seneca: {
+      ru:'Время — единственное, что ты не можешь вернуть. Трать его на дело, которое строит тебя как человека, а не только как профессионала. Деньги приходят и уходят — но то, кем ты стал в процессе их зарабатывания, остаётся навсегда.',
+      en:'Time is the one thing you cannot recover. Spend it on work that builds you as a person, not only as a professional. Money comes and goes — but who you become in the process of earning it remains forever.'
+    },
+    zeno: {
+      ru:'Живи согласно природе разума: делай своё дело честно, полно и без лишних слов. Добродетельный труд — уже награда сам по себе, независимо от того, что скажут другие и сколько заплатят.',
+      en:'Live in accordance with the nature of reason: do your work honestly, fully, without unnecessary words. Virtuous work is already its own reward, regardless of what others say or how much they pay.'
+    }
+  },
+
+  // ── ВРЕМЯ / ПРОКРАСТИНАЦИЯ / TIME ──
+  time: {
+    keywords: { ru:['время','откладываю','прокрастинац','не успеваю','лень','завтра','некогда','трачу время','бесполезно','бесполезн','не могу начать','не хватает времени'], en:['procrastinat','time','lazy','tomorrow','later','can\'t start','wasting time','not enough time','delay','postpone','put off'] },
+    marcus: {
+      ru:'Ты ведёшь себя так, словно у тебя будет тысяча лет. Смерть стоит у плеча — живи, поступай, говори. Каждый день, который ты откладываешь, — это день, который ты отдал пустоте. Сделай одно маленькое дело прямо сейчас — и пустота отступит.',
+      en:'You behave as though you have a thousand years ahead. Death stands at your shoulder — live, act, speak. Every day you delay is a day given to emptiness. Do one small thing right now — and the emptiness retreats.'
+    },
+    epictetus: {
+      ru:'Прокрастинация — это страх. Страх ошибиться, страх оценки, страх несовершенства. Но несделанное дело уже является ошибкой. Несовершенное действие в тысячу раз лучше совершенного бездействия.',
+      en:'Procrastination is fear. Fear of error, fear of judgment, fear of imperfection. But an undone task is already a mistake. Imperfect action is a thousand times better than perfect inaction.'
+    },
+    seneca: {
+      ru:'Dum differtur vita transcurrit — пока мы откладываем, жизнь проходит. Отними у времени, ускользающего без твоего ведома. Начни сегодня — не с грандиозного плана, а с одного шага. Потом ещё одного. Жизнь строится шагами, а не намерениями.',
+      en:'Dum differtur vita transcurrit — while we delay, life passes. Seize the time slipping away unnoticed. Begin today — not with a grand plan, but with one step. Then another. Life is built by steps, not by intentions.'
+    },
+    zeno: {
+      ru:'Разум не откладывает. Животное откладывает — потому что ищет удобства. Человек действует — потому что его природа требует этого. Когда ты откладываешь, ты предаёшь свою природу. Верни себе себя через действие.',
+      en:'Reason does not postpone. An animal delays — because it seeks comfort. A human acts — because his nature demands it. When you procrastinate, you betray your own nature. Reclaim yourself through action.'
+    }
+  },
+
+  // ── ПОТЕРЯ / ГОРЕ / LOSS ──
+  loss: {
+    keywords: { ru:['горе','умер','смерть','потерял близкого','скорблю','похороны','траур','боль утраты','горюю','не могу смириться со смертью'], en:['grief','death','died','lost someone','mourning','funeral','bereavement','gone','passed away','cannot cope with loss'] },
+    marcus: {
+      ru:'Memento mori — помни о смерти. Не как о трагедии, а как о напоминании: каждый момент с теми, кого любим, — дар. Тот, кого ты потерял, был дан тебе не навсегда, а на время — и это время было настоящим. Скорбь — знак того, как глубоко ты умеешь любить. Это твоя сила, а не слабость.',
+      en:'Memento mori — remember death. Not as a tragedy, but as a reminder: every moment with those we love is a gift. The one you lost was given to you not forever, but for a time — and that time was real. Grief is a sign of how deeply you can love. That is your strength, not your weakness.'
+    },
+    epictetus: {
+      ru:'Скорбя о том, что ушло, ты отворачиваешься от того, что осталось. Тот, кого ты любил, дал тебе что-то, что невозможно отнять — воспоминания, урок, часть себя. Это живёт в тебе. Позаботься об этом наследстве.',
+      en:'Grieving for what is gone, you turn away from what remains. The one you loved gave you something that cannot be taken away — memories, a lesson, a part of yourself. That lives within you. Tend to that inheritance.'
+    },
+    seneca: {
+      ru:'Amittimus brevia, longa desideramus — мы теряем краткое и тоскуем по долгому. Позволь скорби быть: она естественна. Но не живи в ней вечно — это значило бы потерять и себя вместе с ушедшим. Лучшая память о любимом — прожить жизнь достойно, как они того заслуживают.',
+      en:'Amittimus brevia, longa desideramus — we lose the brief and long for the lasting. Allow grief to be: it is natural. But do not dwell in it forever — that would mean losing yourself along with the departed. The finest memorial to one beloved is to live life worthily, as they deserve.'
+    },
+    zeno: {
+      ru:'Смерть — возвращение в природу. Всё, что появилось, должно уйти — это закон. Борьба с этим законом не продлевает жизнь, а укорачивает твою. Живи сам с такой полнотой, чтобы, когда придёт твой час, ты тоже мог сказать: я не потратил это время впустую.',
+      en:'Death is a return to nature. Everything that appeared must depart — this is the law. Fighting this law does not extend life; it shortens yours. Live yourself with such fullness that when your hour comes, you too can say: I did not waste this time.'
+    }
+  },
+
+  // ── САМООЦЕНКА / SELF-WORTH ──
+  selfworth: {
+    keywords: { ru:['не уверен','неуверенность','не верю в себя','недостаточно хорош','ничтожество','неудачник','стыжусь','стыд','комплекс','самооценка','я плохой','я хуже','сравниваю себя'], en:['not good enough','insecure','self-doubt','worthless','loser','ashamed','shame','complex','self-esteem','compare myself','inferior','inadequate','confidence'] },
+    marcus: {
+      ru:'Ты сравниваешь себя с другими — но ты единственный экземпляр самого себя во вселенной. Нет конкурса, в котором ты обязан победить, кроме одного: быть лучшей версией себя, чем вчера. Это единственное соревнование, которое имеет смысл.',
+      en:'You compare yourself to others — but you are the only example of yourself in the universe. There is no contest you are obliged to win, except one: to be a better version of yourself than yesterday. That is the only competition that matters.'
+    },
+    epictetus: {
+      ru:'Тебя задевает чужое мнение о тебе — значит, ты отдал этому мнению власть. Верни её себе. Что ты думаешь о себе? Это и есть правда. Чужой взгляд — это их дело, а не твоё. Твоё дело — твой характер.',
+      en:'You are troubled by others\' opinions of you — which means you have given those opinions power over you. Take that power back. What do you think of yourself? That is the truth. Another\'s view is their business, not yours. Your business is your character.'
+    },
+    seneca: {
+      ru:'Recede in te ipse — отступи в самого себя. Ты ищешь подтверждения снаружи, тогда как всё необходимое — внутри. Достоинство — не то, что тебе дают другие, а то, что ты несёшь сам. Начни нести его прямо сейчас.',
+      en:'Recede in te ipse — retreat into yourself. You seek confirmation from outside, while everything needed is within. Dignity is not what others give you — it is what you carry yourself. Begin carrying it right now.'
+    },
+    zeno: {
+      ru:'Добродетель — единственное настоящее благо. Ты добродетелен не потому, что другие считают тебя таким, а потому что ты выбираешь быть таким. Это выбор, доступный тебе в любую секунду, независимо от твоего прошлого.',
+      en:'Virtue is the only true good. You are virtuous not because others consider you so — but because you choose to be so. That choice is available to you at any second, regardless of your past.'
+    }
+  },
+
+  // ── ОБЩИЙ FALLBACK (когда тема не определена) ──
+  general: {
+    marcus: {
+      ru:['Всё, что ты видишь, изменится. Всё, что изменится, снова изменится. Сосредоточься на том, что остаётся неизменным: твоём разуме, твоей воле, твоём выборе. Это твоя настоящая собственность.','Первым делом по утрам говори себе: сегодня я встречу людей назойливых, неблагодарных, злых. Но я знаю, что мы созданы друг для друга, — и встречу их с терпением и мудростью.','Не жди, когда обстоятельства станут лучше. Строй лучшего себя прямо сейчас, в этих обстоятельствах. Вот и вся философия.'],
+      en:['Everything you see will change. Everything that changes will change again. Focus on what remains unchanged: your mind, your will, your choice. This is your true possession.','Tell yourself first thing each morning: today I will meet meddlesome, ungrateful, arrogant people. But I know we are made for each other — and I will meet them with patience and wisdom.','Do not wait for circumstances to improve. Build a better self right now, within these circumstances. That is the whole of philosophy.']
+    },
+    epictetus: {
+      ru:['Есть вещи, которые зависят от нас, и вещи, которые не зависят. Первое: наши суждения, желания, действия. Второе: всё остальное. Сосредоточься на первом — и ты обретёшь мир.','Не требуй, чтобы события случались так, как ты хочешь. Хоти, чтобы они случались так, как случаются. Это и есть поток жизни.','Труднее всего то, что требует не силы тела, а силы духа. Начни упражнять его каждый день — и через год ты не узнаешь себя.'],
+      en:['There are things that depend on us, and things that do not. The first: our judgments, desires, actions. The second: everything else. Focus on the first — and you will find peace.','Do not demand that events happen as you wish. Wish that they happen as they do. That is the flow of life.','The hardest things are not those requiring bodily strength, but strength of spirit. Begin exercising it every day — and in a year you will not recognize yourself.']
+    },
+    seneca: {
+      ru:['Omnia, Lucili, aliena sunt, tempus tantum nostrum est. Всё — чужое, только время наше. Живи каждый час как подарок, потому что им и является.','Пока мы откладываем — жизнь проходит. Одного часа достаточно, чтобы начать. Начни.','Mors quidem universorum finis est timenda non est. Смерти бояться не нужно — нужно бояться не начать жить.'],
+      en:['Omnia, Lucili, aliena sunt, tempus tantum nostrum est. All things are alien; time alone is ours. Live each hour as a gift — because that is what it is.','While we delay, life passes. One hour is enough to begin. Begin.','Death is the common end of all — it is not to be feared. What is to be feared is never truly beginning to live.']
+    },
+    zeno: {
+      ru:['Живи согласно природе. Природа разумна. Разум добродетелен. Добродетель есть счастье. Больше ничего не нужно.','Слушай вдвое больше, чем говоришь. Думай вдвое больше, чем слушаешь. Действуй из этого места.','Не добавляй зла к злу своими суждениями. То, что случилось — случилось. Твоя реакция — это твоя философия.'],
+      en:['Live in accordance with nature. Nature is rational. Reason is virtue. Virtue is happiness. Nothing more is needed.','Listen twice as much as you speak. Think twice as much as you listen. Act from that place.','Do not add evil to evil with your judgments. What happened — happened. Your response is your philosophy.']
+    }
+  }
+};
+
+// ── Умный подбор ответа по теме вопроса ──────────────
+function getSmartDemoResponse(question, mentorId, language) {
+  const q = question.toLowerCase();
+
+  // Ищем совпадение с темой
+  for (const [topic, data] of Object.entries(TOPIC_RESPONSES)) {
+    if (topic === 'general') continue;
+    const keywords = data.keywords[language] || data.keywords.ru;
+    const matched = keywords.some(kw => q.includes(kw));
+    if (matched) {
+      const mentorResp = data[mentorId];
+      if (mentorResp) {
+        const resp = mentorResp[language] || mentorResp.ru;
+        // resp может быть строкой или массивом
+        return Array.isArray(resp) ? rand(resp) : resp;
+      }
+    }
+  }
+
+  // Fallback — общие ответы наставника
+  const generalMentor = TOPIC_RESPONSES.general[mentorId];
+  if (generalMentor) {
+    const pool = generalMentor[language] || generalMentor.ru;
+    return rand(pool);
+  }
+
+  return language === 'ru'
+    ? 'Каждый момент — возможность стать лучше. Не трать его на беспокойство о том, что не в твоей власти. Сосредоточься на том, что можешь изменить прямо сейчас.'
+    : 'Every moment is an opportunity to become better. Do not waste it worrying about what is not in your power. Focus on what you can change right now.';
+}
+
+const QUOTES = {
+  ru:[
+    {t:'Разум — вот что отличает нас от животных и позволяет нам стать богами.',a:'Марк Аврелий'},
+    {t:'Не ищи, чтобы всё происходящее случалось так, как ты хочешь.',a:'Эпиктет'},
+    {t:'Пока откладываешь — жизнь проносится мимо.',a:'Сенека'},
+    {t:'Потери нет там, где есть только возврат к природе.',a:'Марк Аврелий'},
+    {t:'Человек страдает не от событий, а от суждений о событиях.',a:'Эпиктет'},
+    {t:'Omnia aliena sunt, tempus tantum nostrum est.',a:'Сенека'},
+    {t:'Веди себя так, словно жизнь — лишь один день.',a:'Марк Аврелий'},
+    {t:'Бойся не смерти, а жизни, которую ты никогда не начнёшь.',a:'Сенека'},
+    {t:'Ты не жертва обстоятельств — ты их наблюдатель.',a:'Эпиктет'},
+  ],
+  en:[
+    {t:'You have power over your mind, not outside events. Realize this, and you will find strength.',a:'Marcus Aurelius'},
+    {t:'Men are disturbed not by things, but by the opinions about things.',a:'Epictetus'},
+    {t:'All things are alien; time alone is ours.',a:'Seneca'},
+    {t:'The obstacle is the way.',a:'Marcus Aurelius'},
+    {t:'Seek not that the things which happen should happen as you wish.',a:'Epictetus'},
+    {t:'Begin at once to live, and count each separate day as a separate life.',a:'Seneca'},
+    {t:'We suffer more in imagination than in reality.',a:'Seneca'},
+    {t:'You become what you think about most of the time.',a:'Marcus Aurelius'},
+    {t:'Waste no more time arguing what a good man should be. Be one.',a:'Marcus Aurelius'},
+  ]
+};
+
+// ──────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────
+let lang = localStorage.getItem('stoic_lang') || 'ru';
+let mentor = 'marcus';
+let curQ = '', curA = '';
+let allHistory = JSON.parse(localStorage.getItem('stoic_hist') || '[]');
+let virtueData = JSON.parse(localStorage.getItem('stoic_virtues') || JSON.stringify({scores:[0,0,0,0],streak:0,total:0,lastDate:'',points:0}));
+let currentFilter = 'all';
+
+// ──────────────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────────────
+const t = k => (T[lang]||T.ru)[k] || k;
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+
+// ──────────────────────────────────────────────────────
+// LANGUAGE
+// ──────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('stoic_lang', l);
+  applyI18n();
+  updateChips();
+  loadNewQuote();
+  loadDailyPractice();
+  loadReflectionQuestion();
+  renderMentorNames();
+  updateMentorUI();
+  renderVirtueTracker();
+  renderHistory();
+  document.getElementById('user-input').placeholder = t('placeholder');
+  document.getElementById('reflection-answer').placeholder = l==='ru'?'Твой ответ...':'Your answer...';
+  document.getElementById('active-mentor-label').textContent = t('mentor_names')[mentor];
+  // Header toggles
+  ['ru','en'].forEach(x=>{
+    const hb=document.getElementById('lang-'+x);
+    if(hb) hb.classList.toggle('active',x===l);
+    const sb=document.getElementById('lang-btn-'+x);
+    if(sb){
+      sb.style.borderColor = x===l?'rgba(201,168,76,.3)':'transparent';
+      sb.style.color = x===l?'#C9A84C':'#6B6B9A';
+    }
+  });
+  // Filter buttons
+  updateFilterBtns();
+  // Update psychologist if active
+  updatePsychoChips();
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(T[lang]&&T[lang][k]!==undefined) el.textContent=T[lang][k];
+  });
+}
+
+function updateChips() {
+  const chips = document.querySelectorAll('.chip');
+  const names = t('chips');
+  chips.forEach((c,i)=>{ if(names[i]) c.textContent=names[i]; });
+}
+
+function setChip(i) {
+  const prompts = t('chip_prompts');
+  document.getElementById('user-input').value = prompts[i]||'';
+  document.getElementById('user-input').focus();
+}
+
+// ──────────────────────────────────────────────────────
+// QUOTE
+// ──────────────────────────────────────────────────────
+function loadNewQuote() {
+  const q = rand(QUOTES[lang]||QUOTES.ru);
+  const el = document.getElementById('daily-quote');
+  const au = document.getElementById('daily-author');
+  el.style.transition='opacity .3s'; el.style.opacity=0;
+  setTimeout(()=>{ el.textContent=`«${q.t}»`; au.textContent=`— ${q.a}`; el.style.opacity=1; },250);
+}
+
+// ──────────────────────────────────────────────────────
+// DAILY PRACTICE
+// ──────────────────────────────────────────────────────
+function loadDailyPractice() {
+  const el = document.getElementById('daily-practice-text');
+  const practices = t('practices');
+  el.style.opacity=0;
+  setTimeout(()=>{ el.textContent=rand(practices); el.style.transition='opacity .3s'; el.style.opacity=1; },200);
+}
+
+// ──────────────────────────────────────────────────────
+// REFLECTION
+// ──────────────────────────────────────────────────────
+function loadReflectionQuestion() {
+  const el = document.getElementById('reflection-question');
+  el.textContent = `«${rand(t('reflections'))}»`;
+}
+
+function saveReflection() {
+  const answer = document.getElementById('reflection-answer').value.trim();
+  const question = document.getElementById('reflection-question').textContent;
+  if(!answer){ showToast(lang==='ru'?'Напиши свой ответ':'Write your answer','warn'); return; }
+  allHistory.unshift({
+    id:Date.now(), type:'reflection',
+    question: question.replace(/«|»/g,''),
+    answer, mentor: t('mentor_names')[mentor],
+    date: new Date().toLocaleDateString(lang==='ru'?'ru-RU':'en-US',{day:'numeric',month:'short'})
+  });
+  saveHistory();
+  document.getElementById('reflection-answer').value = '';
+  loadReflectionQuestion();
+  showToast(t('toast_ref_saved'));
+}
+
+// ──────────────────────────────────────────────────────
+// MENTOR
+// ──────────────────────────────────────────────────────
+function selectMentor(id) {
+  mentor = id;
+  updateMentorUI();
+  const name = t('mentor_names')[id];
+  document.getElementById('active-mentor-label').textContent = name;
+  showToast(t('toast_mentor')+name);
+}
+
+function renderMentorNames() {
+  const names = t('mentor_names');
+  ['marcus','epictetus','seneca','zeno'].forEach(id=>{
+    const el=document.getElementById('lbl-'+id);
+    if(el&&names[id]) el.textContent=names[id];
+  });
+}
+
+function updateMentorUI() {
+  ['marcus','epictetus','seneca','zeno'].forEach(id=>{
+    const card=document.getElementById('mc-'+id);
+    const dot=document.getElementById('dot-'+id);
+    const lbl=document.getElementById('lbl-'+id);
+    if(!card) return;
+    const on = id===mentor;
+    card.classList.toggle('active',on);
+    const ico=card.querySelector('.w-10');
+    if(ico){
+      if(on){ ico.className='w-10 h-10 glass-gold rounded-xl flex items-center justify-center'; ico.style.background=''; }
+      else { ico.className='w-10 h-10 rounded-xl flex items-center justify-center'; ico.style.background='rgba(37,37,69,.7)'; }
+      const i=ico.querySelector('i');
+      if(i) i.style.color=on?'#C9A84C':'#6B6B9A';
+    }
+    if(dot){
+      dot.className=on?'w-1.5 h-1.5 rounded-full bg-gold':'w-1.5 h-1.5 rounded-full border border-muted';
+      dot.style.boxShadow=on?'0 0 6px rgba(201,168,76,.9)':'';
+    }
+    if(lbl) lbl.className='text-xs text-center font-medium leading-tight '+(on?'text-soft':'text-muted');
+  });
+}
+
+// ──────────────────────────────────────────────────────
+// ASK MENTOR (Gemini API + fallback)
+// ──────────────────────────────────────────────────────
+async function askMentor() {
+  const inp = document.getElementById('user-input');
+  const q = (inp.value||'').trim();
+  if(!q){ showToast(lang==='ru'?'Введите вопрос':'Enter your question','warn'); return; }
+  curQ = q;
+
+  const ra=document.getElementById('response-area');
+  const sk=document.getElementById('skel');
+  const th=document.getElementById('think');
+  const rc=document.getElementById('resp-content');
+  const btn=document.getElementById('send-btn');
+
+  ra.classList.remove('hidden');
+  ra.classList.add('fade-up');
+  sk.classList.remove('hidden');
+  th.classList.remove('hidden');
+  rc.classList.add('hidden');
+  btn.disabled=true;
+
+  setTimeout(()=>ra.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+
+  const mentorMap = {
+    marcus:'Marcus Aurelius, Roman Emperor and Stoic philosopher (121–180 AD)',
+    epictetus:'Epictetus, freed slave and great Stoic teacher (50–135 AD)',
+    seneca:'Seneca the Younger, Roman statesman and Stoic philosopher (4 BC–65 AD)',
+    zeno:'Zeno of Citium, founder of Stoic philosophy (334–262 BC)',
+  };
+  const langLine = lang==='ru'
+    ? 'ВАЖНО: Отвечай ТОЛЬКО на русском языке. Твой ответ должен быть СТРОГО посвящён вопросу пользователя — не отвлекайся на другие темы.'
+    : 'IMPORTANT: Respond ONLY in English. Your answer must be STRICTLY about the user\'s specific question — do not drift to other topics.';
+  const sys = `You are ${mentorMap[mentor]}. Speak in first person as this philosopher.
+RULES:
+1. Read the user's question carefully and answer EXACTLY what they asked about.
+2. If they ask about anger — talk about anger. If about anxiety — about anxiety. Never mix topics.
+3. Apply relevant Stoic wisdom: dichotomy of control, amor fati, memento mori, virtue as the highest good.
+4. Be concise (3-5 sentences), profound and practical.
+5. No greetings, no "I understand your question" — start with the philosophical insight immediately.
+6. Use a noble, slightly archaic tone.
+${langLine}`;
+
+  let answered = false;
+  try {
+    const res = await Promise.race([
+      fetch(GEMINI_URL(),{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          contents:[{role:'user',parts:[{text:q}]}],
+          systemInstruction:{parts:[{text:sys}]},
+          generationConfig:{temperature:0.88,maxOutputTokens:320,topK:40,topP:0.95}
+        })
+      }),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),14000))
+    ]);
+    if(!res.ok){ const d=await res.json().catch(()=>({})); throw new Error(d?.error?.message||'HTTP '+res.status); }
+    const data=await res.json();
+    const text=data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if(!text) throw new Error('empty');
+    curA=text;
+    sk.classList.add('hidden'); th.classList.add('hidden');
+    showResp(text,'Gemini AI',false);
+    answered=true;
+  } catch(err){
+    console.warn('Gemini:',err.message);
+  }
+
+  if(!answered){
+    const answer = getSmartDemoResponse(q, mentor, lang);
+    curA=answer;
+    sk.classList.add('hidden'); th.classList.add('hidden');
+    showResp(answer,t('notice_demo'),true);
+  }
+  btn.disabled=false;
+}
+
+function showResp(text,badge,isDemo){
+  const rc=document.getElementById('resp-content');
+  const sb=document.getElementById('source-badge');
+  rc.classList.remove('hidden');
+  // Always show clean AI label, no demo notice
+  sb.textContent = 'Gemini AI';
+  sb.style.background='rgba(201,168,76,.1)';
+  sb.style.borderColor='rgba(201,168,76,.2)';
+  sb.style.color='#C9A84C';
+  typewriter(document.getElementById('resp-text'),text);
+}
+
+function typewriter(el,text){
+  el.textContent='';
+  const cur=document.createElement('span'); cur.className='cursor'; el.appendChild(cur);
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i<text.length){ el.insertBefore(document.createTextNode(text[i]),cur); i++; }
+    else{ clearInterval(iv); cur.remove(); }
+  },15);
+}
+
+function askFollowUp(){
+  document.getElementById('user-input').value=t('follow');
+  document.getElementById('user-input').focus();
+}
+
+function shareAnswer(){
+  const text=curA||'';
+  if(!text){ showToast(lang==='ru'?'Нет ответа для шаринга':'Nothing to share','warn'); return; }
+  const shareText=`${t('mentor_names')[mentor]}:\n\n"${text}"\n\n— AI Stoic Mentor`;
+  if(navigator.share){ navigator.share({title:'AI Stoic Mentor',text:shareText}).catch(()=>{}); }
+  else { navigator.clipboard.writeText(shareText).then(()=>showToast(t('toast_shared'))).catch(()=>{}); }
+}
+
+// ──────────────────────────────────────────────────────
+// HISTORY
+// ──────────────────────────────────────────────────────
+function saveToHistory() {
+  if(!curQ||!curA) return;
+  allHistory.unshift({
+    id:Date.now(), type:'chat',
+    question:curQ, answer:curA,
+    mentor:t('mentor_names')[mentor],
+    date:new Date().toLocaleDateString(lang==='ru'?'ru-RU':'en-US',{day:'numeric',month:'short'})
+  });
+  saveHistory();
+  showToast(t('toast_saved'));
+}
+
+function saveHistory(){
+  if(allHistory.length>100) allHistory=allHistory.slice(0,100);
+  localStorage.setItem('stoic_hist',JSON.stringify(allHistory));
+  renderHistory();
+}
+
+function filterHistory(type,btn){
+  currentFilter=type;
+  updateFilterBtns(btn);
+  renderHistory();
+}
+
+function updateFilterBtns(activeBtn){
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.style.background=''; b.style.borderColor=''; b.style.color='#6B6B9A';
+    b.className='filter-btn text-xs px-4 py-1.5 rounded-xl font-medium transition-all glass text-muted';
+  });
+  const ab = activeBtn || document.querySelector(`.filter-btn[onclick*="${currentFilter}"]`);
+  if(ab){
+    ab.style.background='rgba(201,168,76,.12)';
+    ab.style.borderColor='rgba(201,168,76,.3)';
+    ab.style.color='#C9A84C';
+  }
+}
+
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  const empty=document.getElementById('hist-empty');
+  list.querySelectorAll('.hi').forEach(e=>e.remove());
+  const filtered = currentFilter==='all' ? allHistory :
+    allHistory.filter(h=>h.type===currentFilter||(currentFilter==='chat'&&!h.type));
+  if(!filtered.length){ empty.style.display='flex'; return; }
+  empty.style.display='none';
+  filtered.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='hi glass rounded-2xl p-4 fade-up hist-item cursor-pointer';
+    const icon = item.type==='reflection'?'fa-moon':'fa-message';
+    const qLabel = item.type==='reflection'?(lang==='ru'?'Рефлексия':'Reflection'):(item.question||'');
+    d.innerHTML=`
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <i class="fa-solid ${icon} text-gold text-xs flex-shrink-0"></i>
+          <p class="text-sm text-soft font-medium leading-snug line-clamp-2">${esc(qLabel)}</p>
+        </div>
+        <span class="text-xs text-muted flex-shrink-0">${esc(item.date||'')}</span>
+      </div>
+      <p class="text-xs text-muted font-serif italic leading-relaxed line-clamp-2">${esc(item.answer||'')}</p>
+      <div class="flex items-center justify-between mt-2">
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-scroll text-gold text-xs"></i>
+          <span class="text-xs text-muted">${esc(item.mentor||'')}</span>
+        </div>
+        <button onclick="deleteHistItem(${item.id},event)" class="text-xs text-muted hover:text-soft transition-colors">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+function deleteHistItem(id,e){
+  e.stopPropagation();
+  allHistory=allHistory.filter(h=>h.id!==id);
+  saveHistory();
+}
+
+function clearHistory(){
+  allHistory=[]; saveHistory(); showToast(t('toast_cleared'));
+}
+
+// ──────────────────────────────────────────────────────
+// VIRTUE TRACKER
+// ──────────────────────────────────────────────────────
+function renderVirtueTracker(){
+  // Stats
+  document.getElementById('streak-count').textContent=virtueData.streak||0;
+  document.getElementById('total-practices').textContent=virtueData.total||0;
+  document.getElementById('virtue-score').textContent=virtueData.points||0;
+
+  // Virtue bars
+  const container=document.getElementById('virtue-list');
+  container.innerHTML='';
+  const names=t('virtue_names');
+  const descs=t('virtue_descs');
+  const icons=['fa-brain','fa-scale-balanced','fa-shield-halved','fa-spa'];
+  const scores=virtueData.scores||[0,0,0,0];
+  names.forEach((name,i)=>{
+    const pct=Math.min(100,Math.round((scores[i]||0)/10*100));
+    const div=document.createElement('div');
+    div.className='glass rounded-2xl p-4';
+    div.innerHTML=`
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 glass-gold rounded-xl flex items-center justify-center">
+            <i class="fa-solid ${icons[i]} text-gold text-xs"></i>
+          </div>
+          <div>
+            <p class="text-sm text-soft font-medium">${esc(name)}</p>
+            <p class="text-xs text-muted font-light">${esc(descs[i])}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gold font-semibold text-sm">${scores[i]||0}</span>
+          <div class="flex gap-1">
+            <button onclick="changeVirtue(${i},-1)" class="w-7 h-7 glass rounded-lg flex items-center justify-center text-muted hover:text-soft transition-colors text-xs">−</button>
+            <button onclick="changeVirtue(${i},1)" class="w-7 h-7 glass-gold rounded-lg flex items-center justify-center text-gold text-xs hover:opacity-80 transition-opacity">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="virtue-bar-bg">
+        <div class="virtue-bar-fill" style="width:${pct}%"></div>
+      </div>`;
+    container.appendChild(div);
+  });
+
+  // Weekly calendar
+  renderWeekCalendar();
+
+  // Daily tasks
+  renderDailyTasks();
+}
+
+function changeVirtue(i,delta){
+  virtueData.scores[i]=Math.max(0,Math.min(10,(virtueData.scores[i]||0)+delta));
+  virtueData.points=(virtueData.scores||[]).reduce((a,b)=>a+b,0);
+  saveVirtues();
+  renderVirtueTracker();
+}
+
+function renderWeekCalendar(){
+  const cal=document.getElementById('week-calendar');
+  if(!cal) return;
+  cal.innerHTML='';
+  const days=lang==='ru'?['Пн','Вт','Ср','Чт','Пт','Сб','Вс']:['Mo','Tu','We','Th','Fr','Sa','Su'];
+  const completed=virtueData.completedDays||[];
+  const today=new Date();
+  const dayOfWeek=(today.getDay()+6)%7;
+  for(let i=0;i<7;i++){
+    const d=new Date(today); d.setDate(today.getDate()-dayOfWeek+i);
+    const key=d.toISOString().split('T')[0];
+    const done=completed.includes(key);
+    const isToday=i===dayOfWeek;
+    const div=document.createElement('div');
+    div.className='flex flex-col items-center gap-1 flex-1';
+    div.innerHTML=`
+      <p class="text-xs ${isToday?'text-gold font-semibold':'text-muted'}">${days[i]}</p>
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-medium transition-all ${done?'glass-gold':'glass'} ${isToday?'ring-1 ring-gold/40':''}" style="${done?'':''}">
+        ${done?'<i class="fa-solid fa-check text-gold text-xs"></i>':`<span class="${isToday?'text-gold':'text-muted'}">${d.getDate()}</span>`}
+      </div>`;
+    cal.appendChild(div);
+  }
+}
+
+function renderDailyTasks(){
+  const container=document.getElementById('daily-tasks');
+  if(!container) return;
+  container.innerHTML='';
+  const tasks=t('tasks');
+  const doneTasks=virtueData.doneTasks||[];
+  tasks.forEach((task,i)=>{
+    const done=doneTasks.includes(i);
+    const div=document.createElement('div');
+    div.className='flex items-center gap-3 cursor-pointer';
+    div.onclick=()=>toggleTask(i);
+    div.innerHTML=`
+      <div class="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${done?'glass-gold':'glass border-border border'}" style="border:1px solid;">
+        ${done?'<i class="fa-solid fa-check text-gold" style="font-size:9px;"></i>':''}
+      </div>
+      <p class="text-sm ${done?'text-muted line-through':'text-soft'} font-light leading-snug">${esc(task)}</p>`;
+    container.appendChild(div);
+  });
+}
+
+function toggleTask(i){
+  let done=virtueData.doneTasks||[];
+  if(done.includes(i)) done=done.filter(x=>x!==i);
+  else done.push(i);
+  virtueData.doneTasks=done;
+  saveVirtues();
+  renderDailyTasks();
+}
+
+function completeDayTasks(){
+  const today=new Date().toISOString().split('T')[0];
+  const completed=virtueData.completedDays||[];
+  if(!completed.includes(today)){
+    completed.push(today);
+    virtueData.completedDays=completed;
+    virtueData.total=(virtueData.total||0)+1;
+    // update streak
+    const yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yk=yesterday.toISOString().split('T')[0];
+    if(completed.includes(yk)) virtueData.streak=(virtueData.streak||0)+1;
+    else virtueData.streak=1;
+    virtueData.points=(virtueData.points||0)+5;
+    virtueData.doneTasks=[];
+    saveVirtues();
+    renderVirtueTracker();
+    showToast(t('toast_done'));
+  }
+}
+
+function saveVirtues(){
+  localStorage.setItem('stoic_virtues',JSON.stringify(virtueData));
+}
+
+function resetVirtues(){
+  virtueData={scores:[0,0,0,0],streak:0,total:0,lastDate:'',points:0,completedDays:[],doneTasks:[]};
+  saveVirtues();
+  renderVirtueTracker();
+  showToast(t('toast_cleared'));
+}
+
+// ──────────────────────────────────────────────────────
+// API KEY
+// ──────────────────────────────────────────────────────
+function saveApiKey(){
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key){ showToast(lang==='ru'?'Введите ключ':'Enter the key','warn'); return; }
+  GEMINI_KEY=key;
+  localStorage.setItem('stoic_api_key',key);
+  document.getElementById('api-key-input').value='';
+  showToast(t('toast_api_saved'));
+}
+
+// ──────────────────────────────────────────────────────
+// TABS
+// ──────────────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='virtues') renderVirtueTracker();
+  if(name==='history') renderHistory();
+  if(name==='psycho') { initPsychoChat(); updatePsychoChips(); }
+}
+
+// ──────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────
+let toastTm;
+function showToast(msg,type){
+  const el=document.getElementById('toast');
+  const ico=document.getElementById('toast-icon');
+  el.querySelector('span').textContent=msg;
+  ico.className='fa-solid text-gold '+(type==='warn'?'fa-triangle-exclamation':'fa-check');
+  el.classList.remove('hidden');
+  clearTimeout(toastTm);
+  toastTm=setTimeout(()=>el.classList.add('hidden'),3000);
+}
+
+// ──────────────────────────────────────────────────────
+// PSYCHOLOGIST CHAT
+// ──────────────────────────────────────────────────────
+let psychoHistory = []; // [{role:'user'|'model', text:'...'}]
+let psychoTyping = false;
+
+const PSYCH_SYSTEM = {
+  ru: `Ты — Dr. Sophia, высококвалифицированный психотерапевт с 20-летним опытом. Ты владеешь: когнитивно-поведенческой терапией (КПТ), схема-терапией, ACT (терапия принятия и ответственности), психоанализом, гештальт-терапией, нарративной терапией и подходами на основе осознанности (mindfulness).
+
+ТВОЙ СТИЛЬ РАБОТЫ:
+— Ты тёплая, эмпатичная, никогда не осуждаешь. Говоришь на «ты», неформально, но профессионально.
+— Ты АКТИВНО СЛУШАЕШЬ: отражаешь чувства человека, перефразируешь, проверяешь своё понимание.
+— Ты НЕ ТОРОПИШЬСЯ давать советы. Сначала — глубокое понимание проблемы.
+— Ты задаёшь УМНЫЕ ОТКРЫТЫЕ ВОПРОСЫ, которые помогают человеку самому прийти к пониманию.
+— Ты замечаешь паттерны: что повторяется в рассказе, какие убеждения за этим стоят.
+
+ТЕХНИКИ, КОТОРЫЕ ТЫ ИСПОЛЬЗУЕШЬ (выбирай по ситуации):
+КПТ: помогай выявлять автоматические мысли → проверять их реалистичность → находить альтернативы.
+Сократовский диалог: задавай вопросы, которые подводят человека к собственным инсайтам.
+Нормализация: «То, что ты чувствуешь — это нормальная реакция на...»
+Валидация: «Твои чувства полностью обоснованы, потому что...»
+Переформулирование (рефрейминг): помогай видеть ситуацию под другим углом.
+Экспозиция (для тревоги): постепенное приближение к тому, чего человек избегает.
+Работа со схемами: выявляй глубинные убеждения («Я недостаточно хорош», «Мир опасен»).
+ACT: помогай принять то, что нельзя изменить, и действовать согласно ценностям.
+
+КАК СТРОИТЬ ОТВЕТ:
+1. Сначала — эмпатичное отражение чувств (1-2 предложения).
+2. Затем — углубление: уточняющий вопрос или наблюдение, которое помогает копнуть глубже.
+3. Если человек уже многое рассказал — делай терапевтическое наблюдение или предлагай конкретный инструмент.
+4. Длина ответа: 3-6 предложений. Не пиши простыни текста — это отпугивает.
+5. ВСЕГДА заканчивай вопросом ИЛИ конкретным предложением попробовать что-то.
+
+ВАЖНЫЕ ПРАВИЛА:
+— Никогда не говори "Как AI я не могу..." — ты просто Dr. Sophia.
+— Не используй психологический жаргон без объяснения.
+— Если человек упоминает суицидальные мысли — прояви максимальную заботу, не паникуй, попроси рассказать больше и мягко упомяни о важности живой поддержки.
+— Если человек злится или расстроен — сначала дай место чувствам, не торопись с решениями.
+— Помни ВСЁ, что человек рассказал ранее в этом разговоре — ссылайся на это.
+— Отвечай ТОЛЬКО на русском языке.`,
+
+  en: `You are Dr. Sophia, a highly skilled psychotherapist with 20 years of experience. You are proficient in: Cognitive Behavioral Therapy (CBT), Schema Therapy, Acceptance and Commitment Therapy (ACT), psychoanalytic approaches, Gestalt therapy, narrative therapy, and mindfulness-based interventions.
+
+YOUR THERAPEUTIC STYLE:
+— You are warm, empathetic, never judgmental. You speak naturally but professionally.
+— You ACTIVELY LISTEN: you reflect feelings, paraphrase, and check your understanding.
+— You DO NOT rush to give advice. First comes deep understanding of the problem.
+— You ask SMART OPEN-ENDED QUESTIONS that help the person arrive at their own insights.
+— You notice patterns: what keeps repeating, what beliefs may underlie it.
+
+TECHNIQUES YOU USE (choose based on situation):
+CBT: help identify automatic thoughts → test their realism → find balanced alternatives.
+Socratic dialogue: ask questions that lead the person to their own insights.
+Normalization: "What you're feeling is a completely normal response to..."
+Validation: "Your feelings make complete sense because..."
+Reframing: help see the situation from a different angle.
+Exposure (for anxiety): gradual approach toward what the person avoids.
+Schema work: identify core beliefs ("I'm not good enough", "The world is dangerous").
+ACT: help accept what cannot be changed and act according to values.
+
+HOW TO STRUCTURE YOUR RESPONSE:
+1. Start with empathic reflection of their feelings (1-2 sentences).
+2. Then deepen: a clarifying question or observation that helps go deeper.
+3. If the person has already shared a lot — offer a therapeutic observation or suggest a specific tool.
+4. Response length: 3-6 sentences. Don't write walls of text.
+5. ALWAYS end with a question OR a specific suggestion to try something.
+
+IMPORTANT RULES:
+— Never say "As an AI I cannot..." — you are simply Dr. Sophia.
+— Don't use psychological jargon without explanation.
+— If someone mentions suicidal thoughts — show maximum care, don't panic, ask them to tell you more, and gently mention the importance of live support.
+— If someone is angry or upset — give space to their feelings first, don't rush to solutions.
+— Remember EVERYTHING the person has shared earlier in this conversation — refer back to it.
+— Respond ONLY in English.`
+};
+
+function initPsychoChat() {
+  const msgs = document.getElementById('psych-messages');
+  if (msgs.children.length > 0) return; // already initialized
+  // Welcome message
+  addPsychoMessage('model', t('psych_welcome'));
+  updatePsychoChips();
+}
+
+function updatePsychoChips() {
+  const chips = document.querySelectorAll('.psych-chip');
+  const names = t('psych_chips');
+  chips.forEach((c,i) => { if(names[i]) c.textContent = names[i]; });
+  const inp = document.getElementById('psych-input');
+  if(inp) inp.placeholder = t('psych_placeholder');
+}
+
+function setPsychoChip(i) {
+  const prompts = t('psych_chip_prompts');
+  const inp = document.getElementById('psych-input');
+  inp.value = prompts[i] || '';
+  inp.focus();
+  // Hide chips after selection
+  document.getElementById('psych-topics').style.display = 'none';
+}
+
+function addPsychoMessage(role, text) {
+  const msgs = document.getElementById('psych-messages');
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = 'flex items-end gap-2 fade-up ' + (isUser ? 'flex-row-reverse' : 'flex-row');
+
+  const avatar = isUser
+    ? `<div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mb-0.5" style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.2);"><i class="fa-solid fa-user" style="color:#C9A84C;font-size:11px;"></i></div>`
+    : `<div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mb-0.5" style="background:linear-gradient(135deg,rgba(100,160,255,.15),rgba(80,120,220,.08));border:1px solid rgba(100,160,255,.2);"><i class="fa-solid fa-brain" style="color:#7BAEFF;font-size:11px;"></i></div>`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'max-w-[78%] px-4 py-3 text-sm leading-relaxed font-light';
+  bubble.style.cssText = isUser
+    ? 'background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(201,168,76,.08));border:1px solid rgba(201,168,76,.2);border-radius:18px 18px 4px 18px;color:#E8E8FF;'
+    : 'background:rgba(17,17,40,.9);border:1px solid rgba(255,255,255,.07);border-radius:18px 18px 18px 4px;color:#A0A0C0;';
+
+  if(isUser) {
+    bubble.textContent = text;
+  } else {
+    // Typewriter for AI messages
+    bubble.textContent = '';
+    msgs.appendChild(Object.assign(div, { innerHTML: avatar }));
+    div.appendChild(bubble);
+    let i = 0;
+    const iv = setInterval(() => {
+      if(i < text.length) { bubble.textContent += text[i]; i++;
+        msgs.scrollTop = msgs.scrollHeight;
+      } else clearInterval(iv);
+    }, 18);
+    return;
+  }
+
+  div.innerHTML = avatar;
+  div.appendChild(bubble);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function sendPsychoMessage() {
+  const inp = document.getElementById('psych-input');
+  const text = (inp.value || '').trim();
+  if (!text || psychoTyping) return;
+
+  inp.value = '';
+  inp.style.height = 'auto';
+
+  // Add user message to UI and history
+  addPsychoMessage('user', text);
+  psychoHistory.push({ role: 'user', parts: [{ text }] });
+
+  // Show typing indicator
+  psychoTyping = true;
+  document.getElementById('psych-send-btn').disabled = true;
+  document.getElementById('psych-typing').classList.remove('hidden');
+  const msgs = document.getElementById('psych-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+
+  // Hide quick topic chips after first real message
+  document.getElementById('psych-topics').style.display = 'none';
+
+  let reply = '';
+  try {
+    const res = await Promise.race([
+      fetch(GEMINI_URL_PRO(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: PSYCH_SYSTEM[lang] || PSYCH_SYSTEM.ru }]
+          },
+          contents: psychoHistory,
+          generationConfig: {
+            temperature: 0.82,
+            maxOutputTokens: 600,
+            topK: 40,
+            topP: 0.92
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+          ]
+        })
+      }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 18000))
+    ]);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    reply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    if (!reply) throw new Error('empty response');
+
+  } catch(err) {
+    console.warn('Psycho API error:', err.message);
+    // Smart context-aware fallback based on what user said
+    reply = getSmartPsychoFallback(text, psychoHistory.length);
+  }
+
+  document.getElementById('psych-typing').classList.add('hidden');
+  psychoTyping = false;
+  document.getElementById('psych-send-btn').disabled = false;
+
+  // Save AI reply to history
+  psychoHistory.push({ role: 'model', parts: [{ text: reply }] });
+  // Keep last 30 turns (15 exchanges) for context
+  if (psychoHistory.length > 30) psychoHistory = psychoHistory.slice(-30);
+
+  addPsychoMessage('model', reply);
+}
+
+// Smart fallback — анализирует текст и отвечает по теме
+function getSmartPsychoFallback(userText, histLen) {
+  const q = userText.toLowerCase();
+  const isRu = lang === 'ru';
+
+  // Detect emotional keywords
+  const anger     = isRu ? /гнев|злюсь|злость|ярость|бесит|раздраж|ненавиж/.test(q) : /angry|rage|furious|hate|mad|irritat/.test(q);
+  const sad       = isRu ? /грустн|плачу|тоска|депресс|пусто|одинок|нет смысла|бессмысл/.test(q) : /sad|depress|empty|lonely|meaningless|hopeless|cry/.test(q);
+  const anxious   = isRu ? /тревог|страх|паник|боюсь|переживаю|беспокою|нервнич/.test(q) : /anxious|worry|panic|fear|scared|nervous|stress/.test(q);
+  const relation  = isRu ? /отношени|партнёр|муж|жена|расстали|измен|ревност|люблю/.test(q) : /relationship|partner|husband|wife|breakup|cheat|jealous|love/.test(q);
+  const work      = isRu ? /работ|начальник|уволил|выгорани|устал|коллег|карьер/.test(q) : /work|job|boss|fired|burnout|tired|colleague|career/.test(q);
+  const selfworth = isRu ? /не уверен|неуверен|плохой|виноват|стыд|недостаточ|хуже/.test(q) : /insecure|worthless|guilty|shame|not enough|inferior/.test(q);
+  const family    = isRu ? /родител|мама|папа|семья|дети|ребёнок|сын|дочь/.test(q) : /parent|mom|dad|family|children|child|son|daughter/.test(q);
+  const trauma    = isRu ? /травм|насили|обижал|бил|страдал|прошлое|детство/.test(q) : /trauma|abuse|violence|hurt|suffered|past|childhood/.test(q);
+
+  if (isRu) {
+    if (histLen <= 2) {
+      // First message — open with empathy and exploration
+      if (anxious) return 'Я слышу, что тебе сейчас тревожно, и это ощущение может быть очень изматывающим. Давай разберёмся вместе. Расскажи — эта тревога появилась недавно, или она сопровождает тебя уже долго? И есть ли что-то конкретное, что её запускает, или она просто «фоновая»?';
+      if (sad) return 'Я слышу боль в твоих словах, и хочу, чтобы ты знал — ты не один с этим. Грусть и пустота — это сигнал, что что-то важное для тебя нарушено. Расскажи мне: это ощущение накатывает волнами или присутствует постоянно? И когда оно началось?';
+      if (anger) return 'Злость — это всегда сигнал, что что-то важное для тебя было нарушено или нарушается прямо сейчас. Я не буду просить тебя «успокоиться» — сначала хочу понять. Расскажи, что произошло? Кто или что вызвало эту реакцию?';
+      if (relation) return 'Отношения — это одна из самых сложных и важных сфер жизни, и то, что ты это поднимаешь, говорит о том, что это для тебя по-настоящему важно. Я здесь, чтобы выслушать без осуждения. Что сейчас происходит в этих отношениях — что тебя больше всего беспокоит?';
+      if (work) return 'Работа занимает огромную часть нашей жизни, и когда там что-то идёт не так, это влияет буквально на всё. Расскажи мне подробнее — что именно происходит? Это связано с конкретными людьми, с задачами, или ты просто чувствуешь, что внутренне опустел?';
+      return 'Я рада, что ты решил поговорить — это уже важный шаг. Я здесь, чтобы выслушать тебя без оценок и осуждения. Расскажи мне: что сейчас происходит в твоей жизни, что привело тебя сюда?';
+    }
+
+    // Deeper follow-up responses
+    if (selfworth) return 'То, что ты описываешь — это похоже на то, что психологи называют «внутренним критиком». Этот голос звучит очень убедительно, но он не равен истине. Скажи мне: откуда, как ты думаешь, взялось это убеждение, что ты «недостаточно хорош»? Кто-то говорил тебе это в прошлом?';
+    if (trauma) return 'То, о чём ты рассказываешь — это серьёзный опыт, и важно признать: твои реакции на него абсолютно нормальны. Травматический опыт оставляет следы в теле и психике. Скажи — ты когда-нибудь работал с этим вместе с живым специалистом? И как ты сейчас справляешься с этими воспоминаниями?';
+    if (family) return 'Семейные отношения — это самый глубокий пласт нашей психики, потому что они формируют нас с самого начала. Я замечаю, что это вызывает у тебя сильные чувства. Что в этих отношениях даётся тебе труднее всего — понять другого, быть понятым самому, или что-то ещё?';
+
+    // Generic deep follow-up
+    const deepFollowUps = [
+      'Я замечаю паттерн в том, что ты рассказываешь. Похоже, ты несёшь это уже давно. Скажи — есть ли в твоей жизни человек, с которым ты можешь быть по-настоящему честным? Или ты привык справляться в одиночку?',
+      'Когда ты говоришь об этом, я думаю: а какое убеждение за этим стоит? Часто под болезненными ситуациями скрывается что-то вроде «со мной что-то не так» или «я не заслуживаю лучшего». Откликается ли что-то похожее?',
+      'Мне важно понять тебя глубже. Если бы ты описал это ощущение как физическое — где в теле ты его чувствуешь? Тяжесть в груди, напряжение в плечах, что-то ещё? Тело часто говорит то, что словами сложно выразить.',
+      'Я слышу, как много сил это у тебя забирает. Позволь спросить: а что для тебя сейчас хотя бы немного помогает? Что даёт облегчение, пусть даже временное?',
+    ];
+    return deepFollowUps[Math.floor(Math.random() * deepFollowUps.length)];
+
+  } else {
+    // English fallback
+    if (histLen <= 2) {
+      if (anxious) return 'I can hear that anxiety is really weighing on you right now, and that takes a real toll. Let\'s understand it together. Has this anxiety been with you for a long time, or did something specific trigger it recently? And does it feel more like constant background noise, or does it come in waves?';
+      if (sad) return 'I hear the pain in what you\'re sharing, and I want you to know — you don\'t have to carry this alone. Sadness and emptiness are signals that something important to you has been disrupted. Can you tell me: is this feeling constant, or does it come and go? And when did it start?';
+      if (anger) return 'Anger is always a signal that something important to you has been violated. I\'m not going to ask you to "calm down" — first I want to truly understand. Tell me what happened. Who or what triggered this reaction?';
+      if (relation) return 'Relationships are one of the most complex and meaningful parts of life, and the fact that you\'re bringing this up tells me it really matters to you. I\'m here to listen without judgment. What\'s been happening in this relationship — what\'s troubling you most right now?';
+      if (work) return 'Work takes up such a large part of our lives, and when something goes wrong there it affects everything else. Tell me more — what\'s actually happening? Is it about specific people, about the work itself, or do you just feel internally depleted?';
+      return 'I\'m glad you decided to reach out — that\'s already an important step. I\'m here to listen without judgment or evaluation. Tell me: what\'s been going on in your life that brought you here today?';
+    }
+    if (selfworth) return 'What you\'re describing sounds like what we call the "inner critic" — a voice that sounds very convincing but doesn\'t represent the truth about you. I\'m curious: where do you think that belief — that you\'re "not good enough" — originally came from? Did someone communicate that to you earlier in life?';
+    if (trauma) return 'What you\'re describing is a significant experience, and it\'s important to acknowledge: your reactions to it are completely understandable. Trauma leaves marks on both the mind and body. Have you ever worked through this with a live therapist? And how are you managing these memories day to day right now?';
+
+    const deepFollowUps = [
+      'I notice a pattern in what you\'re sharing. It sounds like you\'ve been carrying this for a long time. Is there anyone in your life you can be truly honest with? Or have you gotten used to handling things alone?',
+      'As I listen, I find myself wondering: what belief might be underneath all of this? Often beneath painful situations there\'s something like "something is wrong with me" or "I don\'t deserve better." Does anything like that resonate?',
+      'I want to understand you more deeply. If you were to describe this feeling physically — where in your body do you feel it? A heaviness in the chest, tension in the shoulders, something else? The body often expresses what\'s hard to put into words.',
+      'I can hear how much energy this is taking from you. Can I ask — what, even slightly, helps right now? What gives you even temporary relief?',
+    ];
+    return deepFollowUps[Math.floor(Math.random() * deepFollowUps.length)];
+  }
+}
+
+function clearPsychoChat() {
+  psychoHistory = [];
+  const msgs = document.getElementById('psych-messages');
+  msgs.innerHTML = '';
+  document.getElementById('psych-topics').style.display = 'flex';
+  addPsychoMessage('model', t('psych_welcome'));
+  updatePsychoChips();
+}
+
+// Auto-resize textarea
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('psych-input');
+  if(inp) {
+    inp.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    inp.addEventListener('keydown', e => {
+      if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPsychoMessage(); }
+    });
+  }
+});
+document.querySelectorAll('.filter-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(x=>{
+      x.style.background=''; x.style.borderColor=''; x.style.color='#6B6B9A';
+    });
+    b.style.background='rgba(201,168,76,.12)';
+    b.style.borderColor='rgba(201,168,76,.3)';
+    b.style.color='#C9A84C';
+  });
+});
+
+// ──────────────────────────────────────────────────────
+// ENTER KEY
+// ──────────────────────────────────────────────────────
+document.getElementById('user-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&window.innerWidth>600){e.preventDefault();askMentor();}
+});
+
+// ──────────────────────────────────────────────────────
+// SERVICE WORKER
+// ──────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// ──────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────
+(function init(){
+  setLang(lang);
+  loadNewQuote();
+  loadDailyPractice();
+  loadReflectionQuestion();
+  renderVirtueTracker();
+  renderHistory();
+  updateMentorUI();
+})();
+</script>
+</body>
+</html>
