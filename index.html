@@ -96,7 +96,7 @@
           <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
           <button class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
         </div>
-        <div class="glass rounded-2xl px-3 py-2 flex items-center gap-1.5">
+        <div hidden class="glass rounded-2xl px-3 py-2 flex items-center gap-1.5">
           <div class="flex gap-1">
             <div class="w-2.5 h-2.5 rounded-full credit-on" id="c1"></div>
             <div class="w-2.5 h-2.5 rounded-full credit-on" id="c2"></div>
@@ -413,13 +413,13 @@ const T = {
     hist_empty_title:'Архив пуст',hist_empty_sub:'Сохранённые беседы появятся здесь',
     settings_sub:'Персонализация',settings_title:'Настройки',language:'Язык / Language',
     student:'Ученик Стои',free_plan:'Бесплатный план · 3 запроса/день',
-    upgrade_pro:'Перейти на Pro',notifications:'Уведомления',
+    :'',notifications:'Уведомления',
     morning:'Утренняя медитация',evening_notif:'Вечерняя рефлексия',
     active_mentor:'Активный наставник',clear_history:'Очистить историю',
     nav_home:'Главная',nav_history:'История',nav_settings:'Настройки',
     pro_desc:'Полный доступ к мудрости стоиков',later:'Позже',
     toast_saved:'Сохранено в архив',toast_cleared:'История очищена',toast_mentor:'Наставник: ',
-    notice_demo:'Демо-режим. В реальном APK работает Gemini AI.',
+    :'. В реальном APK работает Gemini AI.',
     placeholder:'Что тебя беспокоит? Какое решение ты ищешь?...',
     chips:['тревога','принятие','цель'],
     chip_prompts:['Как справиться с тревогой и страхом?','Как принять то, что невозможно изменить?','Как найти цель и смысл в жизни?'],
@@ -440,14 +440,14 @@ const T = {
     archive:'Archive',history_title:'Wisdom History',
     hist_empty_title:'Archive is empty',hist_empty_sub:'Saved conversations will appear here',
     settings_sub:'Personalization',settings_title:'Settings',language:'Язык / Language',
-    student:'Student of the Stoa',free_plan:'Free plan · 3 queries/day',
+    student:'Student of the Stoa',free_plan:' · 3 queries/day',
     upgrade_pro:'Upgrade to Pro',notifications:'Notifications',
     morning:'Morning meditation',evening_notif:'Evening reflection',
     active_mentor:'Active Mentor',clear_history:'Clear History',
     nav_home:'Home',nav_history:'History',nav_settings:'Settings',
     pro_desc:'Full access to Stoic wisdom',later:'Later',
     toast_saved:'Saved to archive',toast_cleared:'History cleared',toast_mentor:'Mentor: ',
-    notice_demo:'Demo mode. Real Gemini AI works in the APK.',
+    :'. Real Gemini AI works in the APK.',
     placeholder:'What troubles you? What guidance do you seek?...',
     chips:['anxiety','acceptance','purpose'],
     chip_prompts:['How do I deal with anxiety and fear?','How do I accept what I cannot change?','How do I find purpose and meaning in life?'],
